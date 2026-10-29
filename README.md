@@ -1,32 +1,60 @@
-# 豆间 · Bean Journal
+<p align="center">
+  <img src="docs/images/logo.svg" width="88" height="88" alt="Bean Journal · 豆间" />
+</p>
+<h1 align="center">Bean Journal · 豆间</h1>
+<p align="center">
+  <a href="README.zh-CN.md">[ 简体中文 ]</a> | <a href="README.md">[ English ]</a>
+</p>
 
-一个无需后端的中英文咖啡手记网站。采用原生 HTML、CSS、JavaScript，静态资源可直接部署。
+<p align="center">A little ritual, every day. Keep your beans, brews and favorite recipes in one place.</p>
+<p align="center"><strong>v1.0 · English / 简体中文 · Light & dark themes · Browser-local storage</strong></p>
 
-## 功能
+Bean Journal is a personal coffee notebook built with plain HTML, CSS and JavaScript. Collect bean cards, record each cup and keep reusable recipes—without a backend or build step.
 
-- 主界面：数据总览、冲煮日历、每日记录、本月小结、最近冲煮。
-- 豆卡：产地、处理法、烘焙度、单品 / 拼配、风味与详情照片。
-- 冲煮：研磨度、粉重、液重 / 注水量、时间、水温、评分与品饮笔记。
-- 独立配方：长期保存目标参数、设备与步骤；冲煮记录选择配方并保存本次实际结果。
-- 我的设备：添加咖啡机和磨豆机，编辑或停用；历史冲煮保留设备名称快照。
-- 旧版爱心收藏自动转为独立配方；来源地图按国家 / 地区汇总豆卡。
-- 中英文与深浅主题；JSON 备份导入导出。
+## Screenshots
 
-## 版本
+Real screenshots provided by the project owner, showing the Chinese interface with sample bean cards. Click any image to view the original resolution.
 
-当前版本：**v1.0**。修复说明见 [CHANGELOG.md](CHANGELOG.md)。
+### Dashboard & brew calendar
 
-## 本地运行
+Track your brewing days, monthly coffee usage and recent cups.
 
-安装 Node.js 22 或更高版本后运行：
+[![Dashboard with a brew calendar and monthly overview](docs/images/dashboard.png)](docs/images/dashboard.png)
+
+### Bean collection
+
+Keep origins, roast levels, processing methods and flavor notes together. Uploaded photos appear in bean details.
+
+[![Bean cards with distinct roast illustrations](docs/images/bean-cards.png)](docs/images/bean-cards.png)
+
+### Origin map
+
+Explore bean origins on the map and hover over a marker to see the associated bean cards.
+
+[![Origin map with a bean-card tooltip](docs/images/origin-map.png)](docs/images/origin-map.png)
+
+## Features
+
+- **Dashboard:** overview, brew calendar, daily records, monthly summaries and recent brews.
+- **Bean cards:** origin, roast level, processing method, single origin or blend, flavor notes and detail photos.
+- **Brew journal:** actual grind setting, dose, yield or water weight, extraction time, temperature, rating and tasting notes for each cup.
+- **Favorite recipes:** reusable target parameters, equipment and instructions. Select a recipe while brewing, view its steps and adjust the actual values independently.
+- **Equipment:** add, rename or deactivate coffee machines and grinders. Historical brews retain their equipment-name snapshots.
+- **Origin map:** group bean cards by recognized countries and regions, with hover details.
+- **Preferences & backup:** English and Simplified Chinese, light and dark themes, JSON import and export including photos.
+- **History preservation:** deleting a bean card keeps its associated brew records. Legacy favorites migrate to recipes.
+
+## Quick start
+
+Install **Node.js 22 or later**, then run from the project directory:
 
 ```sh
 npm start
 ```
 
-打开 http://127.0.0.1:8080 。使用本地 HTTP 服务，不要直接双击 HTML。
+Open **http://127.0.0.1:8080**. The local server uses only built-in Node.js modules, so dependencies are not required just to run the app. Use the HTTP server instead of opening the HTML file directly.
 
-## 开发检查
+## Development
 
 ```sh
 npm ci
@@ -34,36 +62,40 @@ npm test
 npm run format
 ```
 
-测试使用 jsdom 检查 DOM、状态保存、语言切换、旧数据兼容、地图和日历，以及多标签页写入冲突、备份校验、历史记录保留和配方步骤。它们不代替真实浏览器的视觉和文件上传检查。
+The jsdom regression tests cover settings, translations, photos, legacy data, maps, calendars, equipment, recipes, backup validation, preserved history and concurrent-tab conflicts. They do not replace real-browser visual or file-upload checks.
 
-## 目录
+## Project layout
 
 ```text
-dist/                  可直接部署的静态源码（无构建步骤）
-  index.html           页面结构
-  style.css            基础样式
-  enhancements.css     主题、地图和主界面样式
-  app.js               豆卡、冲煮与备份逻辑
-  preferences.js       语言、主题、照片处理
-  samples.js           示例数据本地化
-  map-data.js           Natural Earth 地图数据
-  origin-map.js         来源识别与地图交互
-  dashboard.js          日历、月度统计和最近冲煮
-  workbench.js          设备、独立配方、冲煮参数与旧版迁移
-scripts/serve.cjs       本地静态服务器
-tests/                 功能回归检查
+dist/                  Deployable static source; no build step
+  index.html           Page structure
+  style.css            Base styles
+  enhancements.css     Themes, maps and dashboard styles
+  app.js               Bean forms, persistence and backups
+  preferences.js       Language, theme and photo handling
+  samples.js           Localized sample bean cards
+  map-data.js          Natural Earth map data
+  origin-map.js        Origin matching and map interaction
+  dashboard.js         Calendar, summaries and recent brews
+  workbench.js         Equipment, recipes, brew records and migration
+  licenses/            Bundled third-party licenses
+docs/images/           Project logo and original screenshots
+scripts/serve.cjs      Local HTTP server
+tests/                 Regression tests
+README.md              English documentation (default)
+README.zh-CN.md         Simplified Chinese documentation
 ```
 
-## 数据与部署
+## Storage & deployment
 
-所有记录和照片保存在当前浏览器的 localStorage，**没有云同步**。切换域名或浏览器不会自动带入原有记录，请先从设置导出，再在新站导入。浏览器清理和存储配额会影响数据保存，建议定期备份。
+All records and photos are stored in **this browser's localStorage**. **There is no cloud sync.** To move to another browser or domain, export a backup from Settings and import it at the destination. Browser cleanup and storage limits can affect your data; keep regular backups.
 
-使用支持 Web Locks 的现代浏览器；正式部署使用 HTTPS，本地开发使用 localhost / 127.0.0.1。多标签页独立新增会合并保存，同一记录的冲突会阻止覆盖并提示重新打开。删除豆卡会保留历史冲煮记录。
+Use a modern browser supporting **Web Locks**. Deploy over **HTTPS**; use localhost or 127.0.0.1 for development. Independent additions from multiple tabs are merged, while conflicting edits to the same record are rejected with a prompt to reopen it.
 
-将 `dist/` 作为静态网站目录部署即可。无需 API 密钥或服务器环境变量。为避免复制现有 Sites 身份，本仓库不包含 `.openai/hosting.json`、Sites Git 元数据、发布凭据或用户记录。
+Deploy `dist/` as the static site directory. No API keys or server environment variables are needed. This repository excludes Sites hosting identity, deployment credentials and personal backup files.
 
-地图使用近似国家 / 地区标记，不是庄园定位。无法识别的来源会列为待补充。照片只在详情显示，并在本地压缩后保存。
+Map markers indicate approximate countries or regions, not individual farms. Unrecognized origins are listed for clarification. Photos are compressed locally and displayed only in bean details. Google Fonts falls back to local fonts when unavailable; the map does not need an online map API.
 
-字体从 Google Fonts 加载；网络不可用时回退到本地字体。地图运行不依赖在线地图 API。
+## Version & credits
 
-第三方数据来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+Current version: **v1.0**. See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.

@@ -97,6 +97,24 @@ README.zh-CN.md         简体中文兼容副本
 
 地图使用近似国家 / 地区标记，不是庄园定位；无法识别的来源会列为待补充。照片在本地压缩，仅在详情中显示。字体从 Google Fonts 加载，网络不可用时回退到本地字体；地图不依赖在线地图 API。
 
+## 支持项目
+
+如果豆间对你有帮助，欢迎请我喝杯咖啡，支持项目的维护与更新。感谢你的支持！
+
+**[☕ Buy Me a Coffee](https://buymeacoffee.com/tzbqweas)**
+
+也可以使用微信或支付宝扫码支持，点击图片可查看原图。
+
+<table>
+  <tr><th align="center">微信支付</th><th align="center">支付宝</th></tr>
+  <tr>
+    <td align="center"><a href="docs/donate/wechat.jpg"><img src="docs/donate/wechat.jpg" width="240" alt="微信支付收款码" /></a></td>
+    <td align="center"><a href="docs/donate/alipay.jpg"><img src="docs/donate/alipay.jpg" width="240" alt="支付宝收款码" /></a></td>
+  </tr>
+</table>
+
+捐赠完全自愿，不影响任何功能的使用。
+
 ## 版本与致谢
 
 当前版本：**v1.0**。更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

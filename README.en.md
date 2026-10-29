@@ -97,6 +97,24 @@ Deploy `dist/` as the static site directory. No API keys or server environment v
 
 Map markers indicate approximate countries or regions, not individual farms. Unrecognized origins are listed for clarification. Photos are compressed locally and displayed only in bean details. Google Fonts falls back to local fonts when unavailable; the map does not need an online map API.
 
+## Support the project
+
+If Bean Journal helps you enjoy your coffee routine, you can buy me a coffee to support its maintenance and development. Thank you!
+
+**[☕ Buy Me a Coffee](https://buymeacoffee.com/tzbqweas)**
+
+You can also scan a WeChat Pay or Alipay code below. Click an image to view the original.
+
+<table>
+  <tr><th align="center">WeChat Pay</th><th align="center">Alipay</th></tr>
+  <tr>
+    <td align="center"><a href="docs/donate/wechat.jpg"><img src="docs/donate/wechat.jpg" width="240" alt="WeChat Pay donation QR code" /></a></td>
+    <td align="center"><a href="docs/donate/alipay.jpg"><img src="docs/donate/alipay.jpg" width="240" alt="Alipay donation QR code" /></a></td>
+  </tr>
+</table>
+
+Donations are entirely optional and do not affect access to any features.
+
 ## Version & credits
 
 Current version: **v1.0**. See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.

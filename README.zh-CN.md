@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">Bean Journal · 豆间</h1>
 <p align="center">
-  <a href="README.zh-CN.md">[ 简体中文 ]</a> | <a href="README.md">[ English ]</a>
+  <a href="README.md">[ 简体中文 ]</a> | <a href="README.en.md">[ English ]</a>
 </p>
 
 <p align="center">把喜欢的风味，留在每一页。收藏豆卡，记录每次冲煮，保存心选配方。</p>
@@ -82,8 +82,9 @@ dist/                  可直接部署的静态源码，无构建步骤
 docs/images/           项目图标与原始截图
 scripts/serve.cjs      本地 HTTP 服务器
 tests/                 功能回归测试
-README.md              英文说明，默认展示
-README.zh-CN.md         简体中文说明
+README.md              简体中文说明，默认展示
+README.en.md           英文说明
+README.zh-CN.md         简体中文兼容副本
 ```
 
 ## 数据与部署

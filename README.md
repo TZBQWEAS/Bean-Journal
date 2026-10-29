@@ -52,7 +52,7 @@
 npm start
 ```
 
-打开 **http://127.0.0.1:8080**。本地服务仅使用 Node.js 内置模块，单纯运行网站无需安装开发依赖。请通过 HTTP 服务打开，不要直接双击 HTML。
+打开 http://127.0.0.1:8080。本地服务仅使用 Node.js 内置模块，单纯运行网站无需安装开发依赖。请通过 HTTP 服务打开，不要直接双击 HTML。
 
 ## Docker 部署
 
@@ -62,7 +62,7 @@ npm start
 docker compose up -d --build
 ```
 
-打开 **http://localhost:8080**。停止服务：`docker compose down`。
+打开 http://localhost:8080。停止服务：`docker compose down`。
 
 也可直接构建并启动镜像：
 

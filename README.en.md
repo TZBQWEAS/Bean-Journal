@@ -54,6 +54,38 @@ npm start
 
 Open **http://127.0.0.1:8080**. The local server uses only built-in Node.js modules, so dependencies are not required just to run the app. Use the HTTP server instead of opening the HTML file directly.
 
+## Docker deployment
+
+From the project directory, with Docker Desktop or Docker Engine and Compose installed:
+
+```sh
+docker compose up -d --build
+```
+
+Open **http://localhost:8080**. Stop the service with `docker compose down`.
+
+Alternatively, build and run the image directly:
+
+```sh
+docker build -t bean-journal:1.0 .
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped bean-journal:1.0
+```
+
+The image uses a version- and digest-pinned [official Nginx Alpine image](https://hub.docker.com/_/nginx), runs as a non-root user, listens on container port `8080`, and provides `/healthz`. It includes only static site files and server configuration, without development dependencies, screenshots or payment QR codes. See the [Dockerfile reference](https://docs.docker.com/reference/dockerfile/) for build instructions.
+
+The published port is bound to localhost by default. For a server deployment, place an HTTPS reverse proxy in front of it. Plain HTTP on a LAN IP may lack the secure context required for Web Locks and saving. To change the host port, change only the left side, for example `127.0.0.1:8088:8080`.
+
+**Docker does not move your data to the server.** Beans, photos and brews remain in browser storage; no data volume is needed. Export a backup before changing the domain, protocol or port, then import it at the new address.
+
+Export and load an image for offline deployment:
+
+```sh
+docker save -o bean-journal-1.0.tar bean-journal:1.0
+docker load -i bean-journal-1.0.tar
+```
+
+The exported image must match the target architecture. This local build targets `linux/amd64`; build from source on the target machine for another architecture.
+
 ## Development
 
 ```sh

@@ -54,6 +54,38 @@ npm start
 
 打开 **http://127.0.0.1:8080**。本地服务仅使用 Node.js 内置模块，单纯运行网站无需安装开发依赖。请通过 HTTP 服务打开，不要直接双击 HTML。
 
+## Docker 部署
+
+在项目目录执行（需要 Docker Desktop 或 Docker Engine 与 Compose）：
+
+```sh
+docker compose up -d --build
+```
+
+打开 **http://localhost:8080**。停止服务：`docker compose down`。
+
+也可直接构建并启动镜像：
+
+```sh
+docker build -t bean-journal:1.0 .
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped bean-journal:1.0
+```
+
+镜像使用固定版本和摘要的 [官方 Nginx Alpine 镜像](https://hub.docker.com/_/nginx)，以非 root 用户运行，容器端口为 `8080`，健康检查地址为 `/healthz`。镜像只包含静态网站和服务配置，不包含开发依赖、截图或收款码。构建方法见 [Dockerfile 官方文档](https://docs.docker.com/reference/dockerfile/)。
+
+默认端口仅绑定本机。部署到服务器时，通过 HTTPS 反向代理访问此端口。普通局域网 IP 的 HTTP 地址可能不提供保存所需的 Web Locks 安全上下文。若要更改本机端口，只修改映射左侧，例如 `127.0.0.1:8088:8080`。
+
+**Docker 不会把数据转为服务器存储。** 豆卡、照片和冲煮仍保存在浏览器中，无需挂载数据卷。切换域名、协议或端口前请导出备份，在新地址导入。
+
+导出镜像用于离线部署：
+
+```sh
+docker save -o bean-journal-1.0.tar bean-journal:1.0
+docker load -i bean-journal-1.0.tar
+```
+
+导出的镜像需与目标服务器架构兼容。本次本地构建为 `linux/amd64`；其他架构可在对应机器上从源码构建。
+
 ## 开发检查
 
 ```sh

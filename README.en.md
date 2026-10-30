@@ -23,7 +23,7 @@ Data remains in each browser. v1.1 does not add accounts or cross-device sync. E
 
 ## Screenshots
 
-Real screenshots provided by the project owner, showing the Chinese interface with sample bean cards. Click any image to view the original resolution.
+Real screenshots provided by the project owner. Desktop screenshots show the Chinese interface; phone screenshots show the English interface. Click any image to view the original resolution.
 
 ### Dashboard & brew calendar
 
@@ -45,7 +45,7 @@ Explore bean origins on the map and hover over a marker to see the associated be
 
 ### On a phone
 
-Real phone screenshots provided by the project owner. Both images are 658 × 1280 pixels and displayed at the same size. Click either image to view it in full.
+Real phone screenshots provided by the project owner. Both images are 670 × 1280 pixels and displayed at the same size. Click either image to view it in full.
 
 <table>
   <tr>
@@ -53,8 +53,8 @@ Real phone screenshots provided by the project owner. Both images are 658 × 128
     <th>Origin map & bean cards</th>
   </tr>
   <tr>
-    <td align="center"><a href="docs/images/mobile-dashboard.jpg"><img src="docs/images/mobile-dashboard.jpg" width="329" height="640" alt="Phone dashboard with collapsible navigation and brew calendar" /></a></td>
-    <td align="center"><a href="docs/images/mobile-origin-map.jpg"><img src="docs/images/mobile-origin-map.jpg" width="329" height="640" alt="Phone origin map with bean cards" /></a></td>
+    <td align="center"><a href="docs/images/mobile-dashboard-en.jpg"><img src="docs/images/mobile-dashboard-en.jpg" width="335" height="640" alt="Phone dashboard with collapsible navigation and brew calendar" /></a></td>
+    <td align="center"><a href="docs/images/mobile-origin-map-en.jpg"><img src="docs/images/mobile-origin-map-en.jpg" width="335" height="640" alt="Phone origin map with bean cards" /></a></td>
   </tr>
 </table>
 
@@ -235,3 +235,4 @@ Donations are entirely optional and do not affect access to any features.
 ## Version & credits
 
 Current version: **v1.1**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
+

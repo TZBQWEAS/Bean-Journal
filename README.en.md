@@ -88,8 +88,8 @@ Use the public [Docker Hub image](https://hub.docker.com/r/tzbqweas/bean-journal
 ### Run directly
 
 ```sh
-docker pull tzbqweas/bean-journal:1.1
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.1
+docker pull tzbqweas/bean-journal:latest
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:latest
 ```
 
 Enter `http://localhost:8080` in your browser. Stop with `docker stop bean-journal`; restart with `docker start bean-journal`.
@@ -101,7 +101,7 @@ Create `compose.yaml` in an empty directory:
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.1
+    image: tzbqweas/bean-journal:latest
     ports:
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
@@ -128,14 +128,13 @@ docker compose up -d
 | Item | Value |
 | --- | --- |
 | Image | `tzbqweas/bean-journal` |
-| Tags | `1.0`, `latest` |
+| Tags | `1.1`, `latest` |
 | Published architecture | `linux/amd64` |
 | Container port | `8080` |
 | Health check | `/healthz` |
 | Runtime | Nginx, non-root user |
 | Data volume | Not required |
 
-Examples use `1.0`. To follow future releases, switch to `latest` and run the update commands.
 
 The port is bound to localhost by default. Use an HTTPS reverse proxy for remote access; plain HTTP on a LAN IP may lack the secure context required for Web Locks and saving. Change only the left side of the mapping for another host port, for example `127.0.0.1:8088:8080`.
 
@@ -152,7 +151,7 @@ docker compose up -d --build
 The repository's bundled `compose.yaml` builds locally; it differs from the image-only example above. You can also build separately:
 
 ```sh
-docker build -t bean-journal:1.1 .
+docker build -t bean-journal:latest
 ```
 
 The image includes only static site files and server configuration, without development dependencies, README screenshots or payment QR codes.
@@ -160,14 +159,14 @@ The image includes only static site files and server configuration, without deve
 ### Offline deployment
 
 ```sh
-docker pull tzbqweas/bean-journal:1.1
-docker save -o bean-journal-1.1.tar tzbqweas/bean-journal:1.1
+docker pull tzbqweas/bean-journal:latest
+docker save -o bean-journal-latest.tar tzbqweas/bean-journal:latest
 ```
 
 Copy the archive to the target machine, load it, then use the `docker run` command above:
 
 ```sh
-docker load -i bean-journal-1.1.tar
+docker load -i bean-journal-latest.tar
 ```
 
 The published image targets `linux/amd64`; build from source on the target machine for other architectures.

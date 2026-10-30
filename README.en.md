@@ -23,25 +23,25 @@ Data remains in each browser. v1.1 does not add accounts or cross-device sync. E
 
 ## Screenshots
 
-Real screenshots provided by the project owner. Desktop screenshots show the Chinese interface; phone screenshots show the English interface. Click any image to view the original resolution.
+Real screenshots provided by the project owner. Desktop and phone screenshots show the English interface. All three desktop images use matching 2548 × 1351 canvases, with their full content preserved. Click any image to view it in full.
 
 ### Dashboard & brew calendar
 
 Track your brewing days, monthly coffee usage and recent cups.
 
-[![Dashboard with a brew calendar and monthly overview](docs/images/dashboard.png)](docs/images/dashboard.png)
+[![Dashboard with a brew calendar and monthly overview](docs/images/dashboard-en.png)](docs/images/dashboard-en.png)
 
 ### Bean collection
 
 Keep origins, roast levels, processing methods and flavor notes together. Uploaded photos appear in bean details.
 
-[![Bean cards with distinct roast illustrations](docs/images/bean-cards.png)](docs/images/bean-cards.png)
+[![Bean cards with distinct roast illustrations](docs/images/bean-cards-en.png)](docs/images/bean-cards-en.png)
 
 ### Origin map
 
 Explore bean origins on the map and hover over a marker to see the associated bean cards.
 
-[![Origin map with a bean-card tooltip](docs/images/origin-map.png)](docs/images/origin-map.png)
+[![Origin map with a bean-card tooltip](docs/images/origin-map-en.png)](docs/images/origin-map-en.png)
 
 ### On a phone
 
@@ -235,4 +235,5 @@ Donations are entirely optional and do not affect access to any features.
 ## Version & credits
 
 Current version: **v1.1**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
+
 

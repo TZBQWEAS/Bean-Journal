@@ -19,13 +19,13 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="docs/donate/wechat.jpg">
-        <img src="docs/donate/wechat.jpg" width="240" alt="微信支付收款码" />
+      <a href="./wechat.jpg">
+        <img src="./wechat.jpg" width="240" alt="微信支付收款码" />
       </a>
     </td>
     <td align="center">
-      <a href="docs/donate/alipay.jpg">
-        <img src="docs/donate/alipay.jpg" width="240" alt="支付宝收款码" />
+      <a href="./alipay.jpg">
+        <img src="./alipay.jpg" width="240" alt="支付宝收款码" />
       </a>
     </td>
   </tr>
@@ -56,13 +56,13 @@ You can also support the project by scanning the WeChat Pay or Alipay QR code be
   </tr>
   <tr>
     <td align="center">
-      <a href="docs/donate/wechat.jpg">
-        <img src="docs/donate/wechat.jpg" width="240" alt="WeChat Pay QR Code" />
+      <a href="./wechat.jpg">
+        <img src="./wechat.jpg" width="240" alt="WeChat Pay QR Code" />
       </a>
     </td>
     <td align="center">
-      <a href="docs/donate/alipay.jpg">
-        <img src="docs/donate/alipay.jpg" width="240" alt="Alipay QR Code" />
+      <a href="./alipay.jpg">
+        <img src="./alipay.jpg" width="240" alt="Alipay QR Code" />
       </a>
     </td>
   </tr>

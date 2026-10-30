@@ -58,37 +58,94 @@ The local server uses only built-in Node.js modules, so dependencies are not req
 
 ## Docker deployment
 
-From the project directory, with Docker Desktop or Docker Engine and Compose installed:
+Use the public [Docker Hub image](https://hub.docker.com/r/tzbqweas/bean-journal) without downloading source code or installing Node.js.
+
+### Run directly
+
+```sh
+docker pull tzbqweas/bean-journal:1.0
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.0
+```
+
+Enter `http://localhost:8080` in your browser. Stop with `docker stop bean-journal`; restart with `docker start bean-journal`.
+
+### Docker Compose
+
+Create `compose.yaml` in an empty directory:
+
+```yaml
+services:
+  bean-journal:
+    image: tzbqweas/bean-journal:1.0
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+```
+
+Start with `docker compose up -d`. Stop and remove the container with `docker compose down`.
+
+To pull updates and recreate the service:
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+### Image and storage
+
+| Item | Value |
+| --- | --- |
+| Image | `tzbqweas/bean-journal` |
+| Tags | `1.0`, `latest` |
+| Published architecture | `linux/amd64` |
+| Container port | `8080` |
+| Health check | `/healthz` |
+| Runtime | Nginx, non-root user |
+| Data volume | Not required |
+
+Examples use `1.0`. To follow future releases, switch to `latest` and run the update commands.
+
+The port is bound to localhost by default. Use an HTTPS reverse proxy for remote access; plain HTTP on a LAN IP may lack the secure context required for Web Locks and saving. Change only the left side of the mapping for another host port, for example `127.0.0.1:8088:8080`.
+
+**Data remains in browser storage, not in the container.** There is no cloud sync. Export a backup from Settings before changing the domain, protocol or port, then import it at the new address.
+
+### Build from source
+
+To customize the website, download the repository and run in its directory:
 
 ```sh
 docker compose up -d --build
 ```
 
-Open `http://localhost:8080`.
-
-Stop the service with `docker compose down`.
-
-Alternatively, build and run the image directly:
+The repository's bundled `compose.yaml` builds locally; it differs from the image-only example above. You can also build separately:
 
 ```sh
 docker build -t bean-journal:1.0 .
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped bean-journal:1.0
 ```
 
-The image uses a version- and digest-pinned [official Nginx Alpine image](https://hub.docker.com/_/nginx), runs as a non-root user, listens on container port `8080`, and provides `/healthz`. It includes only static site files and server configuration, without development dependencies, screenshots or payment QR codes. See the [Dockerfile reference](https://docs.docker.com/reference/dockerfile/) for build instructions.
+The image includes only static site files and server configuration, without development dependencies, README screenshots or payment QR codes.
 
-The published port is bound to localhost by default. For a server deployment, place an HTTPS reverse proxy in front of it. Plain HTTP on a LAN IP may lack the secure context required for Web Locks and saving. To change the host port, change only the left side, for example `127.0.0.1:8088:8080`.
-
-**Docker does not move your data to the server.** Beans, photos and brews remain in browser storage; no data volume is needed. Export a backup before changing the domain, protocol or port, then import it at the new address.
-
-Export and load an image for offline deployment:
+### Offline deployment
 
 ```sh
-docker save -o bean-journal-1.0.tar bean-journal:1.0
+docker pull tzbqweas/bean-journal:1.0
+docker save -o bean-journal-1.0.tar tzbqweas/bean-journal:1.0
+```
+
+Copy the archive to the target machine, load it, then use the `docker run` command above:
+
+```sh
 docker load -i bean-journal-1.0.tar
 ```
 
-The exported image must match the target architecture. This local build targets `linux/amd64`; build from source on the target machine for another architecture.
+The published image targets `linux/amd64`; build from source on the target machine for other architectures.
 
 ## Development
 

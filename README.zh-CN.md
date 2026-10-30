@@ -58,37 +58,102 @@ npm start
 
 ## Docker 部署
 
-在项目目录执行（需要 Docker Desktop 或 Docker Engine 与 Compose）：
+镜像已公开发布到 [Docker Hub · tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal)。无需下载源码或安装 Node.js，安装 Docker 后即可运行。
+
+### 方式一：直接运行
+
+```sh
+docker pull tzbqweas/bean-journal:1.0
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.0
+```
+
+在浏览器地址栏输入 `http://localhost:8080`。
+
+停止容器：`docker stop bean-journal`；再次启动：`docker start bean-journal`。
+
+### 方式二：Docker Compose
+
+在一个空目录中创建 `compose.yaml`，粘贴以下内容（使用 Docker Hub 镜像，无需本地构建）：
+
+```yaml
+services:
+  bean-journal:
+    image: tzbqweas/bean-journal:1.0
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+```
+
+在该目录启动：
+
+```sh
+docker compose up -d
+```
+
+停止并移除容器：`docker compose down`。
+
+更新镜像并重新创建服务：
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+### 镜像信息与数据
+
+| 项目 | 说明 |
+| --- | --- |
+| 镜像名称 | `tzbqweas/bean-journal` |
+| 标签 | `1.0`、`latest` |
+| 当前发布架构 | `linux/amd64` |
+| 容器端口 | `8080` |
+| 健康检查 | `/healthz` |
+| 运行方式 | Nginx、非 root 用户 |
+| 数据卷 | 无需挂载 |
+
+示例固定使用 `1.0`；希望跟随后续发布时，可将标签改为 `latest`，再执行更新命令。
+
+默认端口仅绑定本机。服务器部署请通过 HTTPS 反向代理访问此端口；普通局域网 IP 的 HTTP 地址可能不提供保存所需的 Web Locks 安全上下文。更换本机端口时，只修改映射左侧，例如 `127.0.0.1:8088:8080`。
+
+**Docker 不会把数据转为服务器存储。** 豆卡、照片和冲煮记录仍保存在浏览器中，没有云同步。更换域名、协议或端口前，请从设置导出备份，再在新地址导入。
+
+### 从源码构建
+
+如果需要修改网站，可下载本仓库，在项目目录执行：
 
 ```sh
 docker compose up -d --build
 ```
 
-打开 `http://localhost:8080`。
-
-停止服务：`docker compose down`。
-
-也可直接构建并启动镜像：
+仓库自带的 `compose.yaml` 用于本地构建；与上方直接使用 Docker Hub 镜像的配置不同。也可单独构建：
 
 ```sh
 docker build -t bean-journal:1.0 .
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped bean-journal:1.0
 ```
 
-镜像使用固定版本和摘要的 [官方 Nginx Alpine 镜像](https://hub.docker.com/_/nginx)，以非 root 用户运行，容器端口为 `8080`，健康检查地址为 `/healthz`。镜像只包含静态网站和服务配置，不包含开发依赖、截图或收款码。构建方法见 [Dockerfile 官方文档](https://docs.docker.com/reference/dockerfile/)。
+镜像只包含静态网站和服务配置，不包含开发依赖、README 截图或收款码。
 
-默认端口仅绑定本机。部署到服务器时，通过 HTTPS 反向代理访问此端口。普通局域网 IP 的 HTTP 地址可能不提供保存所需的 Web Locks 安全上下文。若要更改本机端口，只修改映射左侧，例如 `127.0.0.1:8088:8080`。
-
-**Docker 不会把数据转为服务器存储。** 豆卡、照片和冲煮仍保存在浏览器中，无需挂载数据卷。切换域名、协议或端口前请导出备份，在新地址导入。
-
-导出镜像用于离线部署：
+### 离线部署
 
 ```sh
-docker save -o bean-journal-1.0.tar bean-journal:1.0
+docker pull tzbqweas/bean-journal:1.0
+docker save -o bean-journal-1.0.tar tzbqweas/bean-journal:1.0
+```
+
+把文件复制到目标机器后导入，再使用“方式一”中的 `docker run` 命令启动：
+
+```sh
 docker load -i bean-journal-1.0.tar
 ```
 
-导出的镜像需与目标服务器架构兼容。本次本地构建为 `linux/amd64`；其他架构可在对应机器上从源码构建。
+当前发布镜像适用于 `linux/amd64`；其他架构可在对应机器上从源码构建。
 
 ## 开发检查
 

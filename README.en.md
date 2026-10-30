@@ -52,7 +52,9 @@ Install **Node.js 22 or later**, then run from the project directory:
 npm start
 ```
 
-Open **http://127.0.0.1:8080**. The local server uses only built-in Node.js modules, so dependencies are not required just to run the app. Use the HTTP server instead of opening the HTML file directly.
+Open `http://127.0.0.1:8080`.
+
+The local server uses only built-in Node.js modules, so dependencies are not required just to run the app. Use the HTTP server instead of opening the HTML file directly.
 
 ## Docker deployment
 
@@ -62,7 +64,9 @@ From the project directory, with Docker Desktop or Docker Engine and Compose ins
 docker compose up -d --build
 ```
 
-Open **http://localhost:8080**. Stop the service with `docker compose down`.
+Open `http://localhost:8080`.
+
+Stop the service with `docker compose down`.
 
 Alternatively, build and run the image directly:
 

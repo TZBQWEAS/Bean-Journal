@@ -43,20 +43,6 @@
 
 [![来源地图：原产地标记与豆卡悬浮详情](docs/images/origin-map.png)](docs/images/origin-map.png)
 
-### 手机实拍
-
-以下为项目所有者提供的手机真实截图。两张图片统一为 658 × 1280 像素，以相同尺寸展示，点击可查看原图。
-
-<table>
-  <tr>
-    <th>主界面与冲煮日历</th>
-    <th>来源地图与豆卡</th>
-  </tr>
-  <tr>
-    <td align="center"><a href="docs/images/mobile-dashboard.jpg"><img src="docs/images/mobile-dashboard.jpg" width="329" height="640" alt="手机主界面、折叠菜单与冲煮日历" /></a></td>
-    <td align="center"><a href="docs/images/mobile-origin-map.jpg"><img src="docs/images/mobile-origin-map.jpg" width="329" height="640" alt="手机来源地图与豆卡" /></a></td>
-  </tr>
-</table>
 
 ## 功能
 
@@ -88,8 +74,8 @@ npm start
 ### 方式一：直接运行
 
 ```sh
-docker pull tzbqweas/bean-journal:1.1
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.1
+docker pull tzbqweas/bean-journal:latest
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:latest
 ```
 
 在浏览器地址栏输入 `http://localhost:8080`。
@@ -103,7 +89,7 @@ docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stoppe
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.1
+    image: tzbqweas/bean-journal:latest
     ports:
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
@@ -136,14 +122,13 @@ docker compose up -d
 | 项目 | 说明 |
 | --- | --- |
 | 镜像名称 | `tzbqweas/bean-journal` |
-| 标签 | `1.0`、`latest` |
+| 标签 | `1.1`、`latest` |
 | 当前发布架构 | `linux/amd64` |
 | 容器端口 | `8080` |
 | 健康检查 | `/healthz` |
 | 运行方式 | Nginx、非 root 用户 |
 | 数据卷 | 无需挂载 |
 
-示例固定使用 `1.0`；希望跟随后续发布时，可将标签改为 `latest`，再执行更新命令。
 
 默认端口仅绑定本机。服务器部署请通过 HTTPS 反向代理访问此端口；普通局域网 IP 的 HTTP 地址可能不提供保存所需的 Web Locks 安全上下文。更换本机端口时，只修改映射左侧，例如 `127.0.0.1:8088:8080`。
 
@@ -160,7 +145,7 @@ docker compose up -d --build
 仓库自带的 `compose.yaml` 用于本地构建；与上方直接使用 Docker Hub 镜像的配置不同。也可单独构建：
 
 ```sh
-docker build -t bean-journal:1.1 .
+docker build -t bean-journal:latest 
 ```
 
 镜像只包含静态网站和服务配置，不包含开发依赖、README 截图或收款码。
@@ -168,14 +153,14 @@ docker build -t bean-journal:1.1 .
 ### 离线部署
 
 ```sh
-docker pull tzbqweas/bean-journal:1.1
-docker save -o bean-journal-1.1.tar tzbqweas/bean-journal:1.1
+docker pull tzbqweas/bean-journal:latest
+docker save -o bean-journal-latest.tar tzbqweas/bean-journal:latest
 ```
 
 把文件复制到目标机器后导入，再使用“方式一”中的 `docker run` 命令启动：
 
 ```sh
-docker load -i bean-journal-1.1.tar
+docker load -i bean-journal-latest.tar
 ```
 
 当前发布镜像适用于 `linux/amd64`；其他架构可在对应机器上从源码构建。

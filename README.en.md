@@ -234,4 +234,4 @@ Donations are entirely optional and do not affect access to any features.
 
 ## Version & credits
 
-Current version: **v1.1**. See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
+Current version: **v1.1**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.

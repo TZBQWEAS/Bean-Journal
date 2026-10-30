@@ -7,9 +7,19 @@
 </p>
 
 <p align="center">把喜欢的风味，留在每一页。收藏豆卡，记录每次冲煮，保存心选配方。</p>
-<p align="center"><strong>v1.0 · 中文 / English · 深浅主题 · 浏览器本地存储</strong></p>
+<p align="center"><strong>v1.1 · 中文 / English · 深浅主题 · 浏览器本地存储</strong></p>
 
 豆间是一个属于咖啡爱好者的个人手记网站，采用原生 HTML、CSS 和 JavaScript。用豆卡收藏风味，用冲煮记录留住每一杯，用配方保存可反复使用的方案，无需后端和构建步骤。
+
+## v1.1 更新
+
+- 修复局域网 HTTP 下新增豆卡、冲煮、设备和配方无法保存的问题。
+- 防止连续点击保存产生重复记录；HTTP 保存连接关闭后自动重连，并保留多标签页冲突保护。
+- 手机顶部新增折叠菜单，支持横竖屏；iPad 分屏保留展开导航。
+- 改善窄屏表单与弹窗滚动，统一 iPad Safari 的输入框、下拉框和日期框尺寸，修复手机首页横向溢出。
+- Docker 标签 `1.1` 和 `latest` 均指向本次发布；支持 `linux/amd64`。
+
+数据仍保存在当前浏览器，v1.1 不包含账户或多端同步。更新前建议在设置中导出备份，并保持原访问地址和端口。完整更新记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 真实截图
 
@@ -63,8 +73,8 @@ npm start
 ### 方式一：直接运行
 
 ```sh
-docker pull tzbqweas/bean-journal:1.0
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.0
+docker pull tzbqweas/bean-journal:1.1
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.1
 ```
 
 在浏览器地址栏输入 `http://localhost:8080`。
@@ -78,7 +88,7 @@ docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stoppe
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.0
+    image: tzbqweas/bean-journal:1.1
     ports:
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
@@ -135,7 +145,7 @@ docker compose up -d --build
 仓库自带的 `compose.yaml` 用于本地构建；与上方直接使用 Docker Hub 镜像的配置不同。也可单独构建：
 
 ```sh
-docker build -t bean-journal:1.0 .
+docker build -t bean-journal:1.1 .
 ```
 
 镜像只包含静态网站和服务配置，不包含开发依赖、README 截图或收款码。
@@ -143,14 +153,14 @@ docker build -t bean-journal:1.0 .
 ### 离线部署
 
 ```sh
-docker pull tzbqweas/bean-journal:1.0
-docker save -o bean-journal-1.0.tar tzbqweas/bean-journal:1.0
+docker pull tzbqweas/bean-journal:1.1
+docker save -o bean-journal-1.1.tar tzbqweas/bean-journal:1.1
 ```
 
 把文件复制到目标机器后导入，再使用“方式一”中的 `docker run` 命令启动：
 
 ```sh
-docker load -i bean-journal-1.0.tar
+docker load -i bean-journal-1.1.tar
 ```
 
 当前发布镜像适用于 `linux/amd64`；其他架构可在对应机器上从源码构建。
@@ -218,4 +228,4 @@ README.zh-CN.md         简体中文兼容副本
 
 ## 版本与致谢
 
-当前版本：**v1.0**。更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+当前版本：**v1.1**。更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

@@ -74,47 +74,125 @@ function mergeJournal(base, wanted, current, baseline) {
   merged.schemaVersion = 2;
   return merged;
 }
+// getRandomValues is also available on LAN HTTP origins.
+function journalId() {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(
+    "",
+  );
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+let journalLockDatabase;
+function withJournalLock(write, reconnect = true) {
+  if (navigator.locks?.request)
+    return navigator.locks.request("doujian-journal-write", write);
+  // Read/write transactions on one store serialize across tabs on HTTP too.
+  // Coffee records remain in the existing localStorage; this DB is only a mutex.
+  journalLockDatabase ??= new Promise((resolve, reject) => {
+    const request = indexedDB.open("doujian-write-lock", 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("lock");
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onclose = () => {
+        journalLockDatabase = null;
+      };
+      db.onversionchange = () => {
+        db.close();
+        journalLockDatabase = null;
+      };
+      resolve(db);
+    };
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error("Storage blocked"));
+  }).catch((error) => {
+    journalLockDatabase = null;
+    throw error;
+  });
+  return journalLockDatabase.then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        let transaction;
+        try {
+          transaction = db.transaction("lock", "readwrite");
+        } catch (error) {
+          // Retry only before the write callback has run; never replay a write.
+          if (reconnect && error.name === "InvalidStateError") {
+            journalLockDatabase = null;
+            resolve(withJournalLock(write, false));
+          } else reject(error);
+          return;
+        }
+        let result;
+        transaction.objectStore("lock").get("journal").onsuccess = () => {
+          try {
+            result = write();
+          } catch (error) {
+            transaction.abort();
+            reject(error);
+          }
+        };
+        transaction.oncomplete = () => resolve(result);
+        transaction.onabort = () =>
+          reject(transaction.error || new Error("Storage aborted"));
+        transaction.onerror = () => reject(transaction.error);
+      }),
+  );
+}
+function saveError(error) {
+  toast(
+    error?.message === "conflict"
+      ? "记录已在另一页面更新，请重新打开后再保存"
+      : "保存失败：浏览器存储不可用或已满，请先导出备份",
+  );
+}
 function persist(next, { replace = false } = {}) {
-  const initialRaw = localStorage.getItem(key),
-    base = structuredClone(data),
-    wanted = structuredClone(next),
-    baseline = formBaseline && structuredClone(formBaseline);
-  if (!navigator.locks?.request) {
-    toast("当前浏览器不支持安全保存，请使用新版浏览器");
+  try {
+    const initialRaw = localStorage.getItem(key),
+      base = structuredClone(data),
+      wanted = structuredClone(next),
+      baseline = formBaseline && structuredClone(formBaseline);
+    return withJournalLock(() => {
+      try {
+        const raw = localStorage.getItem(key);
+        const current =
+          raw && !replace
+            ? validateJournalBackup(JSON.parse(raw))
+            : {
+                beans: [],
+                brews: [],
+                devices: [],
+                recipes: [],
+                schemaVersion: 2,
+              };
+        let merged;
+        if (replace) {
+          if (raw !== initialRaw) throw Error("conflict");
+          merged = { ...wanted, generation: journalId() };
+        } else merged = mergeJournal(base, wanted, current, baseline);
+        merged = validateJournalBackup(merged);
+        localStorage.setItem(key, JSON.stringify(merged));
+        data = merged;
+        render();
+        return true;
+      } catch (error) {
+        toast(
+          error.message === "conflict"
+            ? "记录已在另一页面更新，请重新打开后再保存"
+            : "保存失败：浏览器存储不可用或已满，请先导出备份",
+        );
+        return false;
+      }
+    }).catch((error) => {
+      saveError(error);
+      return false;
+    });
+  } catch (error) {
+    saveError(error);
     return Promise.resolve(false);
   }
-  return navigator.locks.request("doujian-journal-write", () => {
-    try {
-      const raw = localStorage.getItem(key);
-      const current =
-        raw && !replace
-          ? validateJournalBackup(JSON.parse(raw))
-          : {
-              beans: [],
-              brews: [],
-              devices: [],
-              recipes: [],
-              schemaVersion: 2,
-            };
-      let merged;
-      if (replace) {
-        if (raw !== initialRaw) throw Error("conflict");
-        merged = { ...wanted, generation: crypto.randomUUID() };
-      } else merged = mergeJournal(base, wanted, current, baseline);
-      merged = validateJournalBackup(merged);
-      localStorage.setItem(key, JSON.stringify(merged));
-      data = merged;
-      render();
-      return true;
-    } catch (error) {
-      toast(
-        error.message === "conflict"
-          ? "记录已在另一页面更新，请重新打开后再保存"
-          : "保存失败：浏览器存储不可用或已满，请先导出备份",
-      );
-      return false;
-    }
-  });
 }
 function refreshStoredJournal() {
   try {
@@ -385,46 +463,59 @@ function openForm(type, item = {}, reuse = false) {
   localize();
   $("#modal").showModal();
 }
+let formSaving = false;
 $("#form").onsubmit = async (e) => {
   e.preventDefault();
-  if (!validateDateInputs()) return;
-  if (photoBusy) {
-    toast("照片处理中，请稍候");
-    return;
-  }
-  const obj = Object.fromEntries(new FormData(e.target));
-  for (const k in obj) obj[k] = obj[k].trim();
-  if (kind !== "bean") {
-    await saveWorkbench(obj);
-    return;
-  }
-  if (kind === "bean" && !obj.name) {
-    toast("请填写豆子名称");
-    return;
-  }
-  if (kind === "bean") {
-    delete obj.originCountry;
-    delete obj.originDetail;
-    obj.photo = draftPhoto;
-    preserveSampleFields(
-      obj,
-      data.beans.find((b) => b.id === editing),
-    );
-  }
-  obj.id = editing || crypto.randomUUID();
-  const list = kind === "bean" ? "beans" : "brews";
-  if (kind === "brew") {
-    obj.favorite = editing
-      ? !!data.brews.find((b) => b.id === editing)?.favorite
-      : false;
-    if (obj.rating === "未评分") obj.rating = "";
-  }
-  const next = structuredClone(data);
-  if (editing) next[list] = next[list].map((x) => (x.id === editing ? obj : x));
-  else next[list].push(obj);
-  if (await persist(next)) {
-    $("#modal").close();
-    toast("已保存，下一杯也有迹可循");
+  if (formSaving) return;
+  formSaving = true;
+  const saveButton = e.target.querySelector('[type="submit"]');
+  saveButton.disabled = true;
+  try {
+    if (!validateDateInputs()) return;
+    if (photoBusy) {
+      toast("照片处理中，请稍候");
+      return;
+    }
+    const obj = Object.fromEntries(new FormData(e.target));
+    for (const k in obj) obj[k] = obj[k].trim();
+    if (kind !== "bean") {
+      await saveWorkbench(obj);
+      return;
+    }
+    if (kind === "bean" && !obj.name) {
+      toast("请填写豆子名称");
+      return;
+    }
+    if (kind === "bean") {
+      delete obj.originCountry;
+      delete obj.originDetail;
+      obj.photo = draftPhoto;
+      preserveSampleFields(
+        obj,
+        data.beans.find((b) => b.id === editing),
+      );
+    }
+    obj.id = editing || journalId();
+    const list = kind === "bean" ? "beans" : "brews";
+    if (kind === "brew") {
+      obj.favorite = editing
+        ? !!data.brews.find((b) => b.id === editing)?.favorite
+        : false;
+      if (obj.rating === "未评分") obj.rating = "";
+    }
+    const next = structuredClone(data);
+    if (editing)
+      next[list] = next[list].map((x) => (x.id === editing ? obj : x));
+    else next[list].push(obj);
+    if (await persist(next)) {
+      $("#modal").close();
+      toast("已保存，下一杯也有迹可循");
+    }
+  } catch (error) {
+    saveError(error);
+  } finally {
+    formSaving = false;
+    saveButton.disabled = false;
   }
 };
 $("#delete").onclick = async () => {
@@ -523,7 +614,7 @@ document.addEventListener("click", (e) => {
       ...data,
       beans: [
         {
-          id: crypto.randomUUID(),
+          id: journalId(),
           sampleKey: "yirgacheffe",
           beanType: "单品",
           name: "示例 · 耶加雪菲",
@@ -536,7 +627,7 @@ document.addEventListener("click", (e) => {
           notes: "这是一张演示豆卡，可以编辑或删除。",
         },
         {
-          id: crypto.randomUUID(),
+          id: journalId(),
           sampleKey: "colombia",
           beanType: "单品",
           name: "示例 · 哥伦比亚",
@@ -587,4 +678,44 @@ $("#importFile").onchange = async (e) => {
   }
   e.target.value = "";
 };
+const mobileMenuToggle = $("#mobileMenuToggle");
+function closeMobileMenu() {
+  mobileMenuToggle.setAttribute("aria-expanded", "false");
+}
+mobileMenuToggle.onclick = () => {
+  mobileMenuToggle.setAttribute(
+    "aria-expanded",
+    String(mobileMenuToggle.getAttribute("aria-expanded") !== "true"),
+  );
+};
+$("#sidebarMenu").addEventListener("click", (event) => {
+  if (event.target.closest("button[data-view],#settingsButton,a"))
+    closeMobileMenu();
+});
+document.addEventListener("keydown", (event) => {
+  if (
+    event.key === "Escape" &&
+    mobileMenuToggle.getAttribute("aria-expanded") === "true"
+  ) {
+    closeMobileMenu();
+    mobileMenuToggle.focus();
+  }
+});
+function updateMobileNavigation() {
+  const ua = navigator.userAgent;
+  const tablet =
+    /iPad|Tablet|PlayBook|Silk/i.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ||
+    (/Android/i.test(ua) && !/Mobile/i.test(ua));
+  const phone = /iPhone|iPod|Android.*Mobile|Windows Phone/i.test(ua);
+  // Keep iPad split view expanded and phones collapsed in both orientations.
+  const compact =
+    !tablet && (phone || !!window.matchMedia?.("(max-width: 700px)").matches);
+  document.documentElement.classList.toggle("phone-navigation", compact);
+  closeMobileMenu();
+}
+window
+  .matchMedia?.("(max-width: 700px)")
+  .addEventListener("change", updateMobileNavigation);
+updateMobileNavigation();
 render();

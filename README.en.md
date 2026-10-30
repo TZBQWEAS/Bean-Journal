@@ -7,9 +7,19 @@
 </p>
 
 <p align="center">A little ritual, every day. Keep your beans, brews and favorite recipes in one place.</p>
-<p align="center"><strong>v1.0 · English / 简体中文 · Light & dark themes · Browser-local storage</strong></p>
+<p align="center"><strong>v1.1 · English / 简体中文 · Light & dark themes · Browser-local storage</strong></p>
 
 Bean Journal is a personal coffee notebook built with plain HTML, CSS and JavaScript. Collect bean cards, record each cup and keep reusable recipes—without a backend or build step.
+
+## What's new in v1.1
+
+- Fix saving beans, brews, equipment and recipes over LAN HTTP.
+- Prevent duplicate submissions, reopen closed HTTP save connections, and retain cross-tab conflict protection.
+- Add a collapsible phone menu in both orientations; keep navigation expanded in iPad split view.
+- Improve narrow forms and dialog scrolling, align iPad Safari inputs, selects and date controls, and fix horizontal overflow on the phone dashboard.
+- Docker tags `1.1` and `latest` point to this release; platform: `linux/amd64`.
+
+Data remains in each browser. v1.1 does not add accounts or cross-device sync. Export a backup in Settings before upgrading and keep the same access address and port. See [CHANGELOG.md](CHANGELOG.md) for the full release notes.
 
 ## Screenshots
 
@@ -63,8 +73,8 @@ Use the public [Docker Hub image](https://hub.docker.com/r/tzbqweas/bean-journal
 ### Run directly
 
 ```sh
-docker pull tzbqweas/bean-journal:1.0
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.0
+docker pull tzbqweas/bean-journal:1.1
+docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:1.1
 ```
 
 Enter `http://localhost:8080` in your browser. Stop with `docker stop bean-journal`; restart with `docker start bean-journal`.
@@ -76,7 +86,7 @@ Create `compose.yaml` in an empty directory:
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.0
+    image: tzbqweas/bean-journal:1.1
     ports:
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
@@ -127,7 +137,7 @@ docker compose up -d --build
 The repository's bundled `compose.yaml` builds locally; it differs from the image-only example above. You can also build separately:
 
 ```sh
-docker build -t bean-journal:1.0 .
+docker build -t bean-journal:1.1 .
 ```
 
 The image includes only static site files and server configuration, without development dependencies, README screenshots or payment QR codes.
@@ -135,14 +145,14 @@ The image includes only static site files and server configuration, without deve
 ### Offline deployment
 
 ```sh
-docker pull tzbqweas/bean-journal:1.0
-docker save -o bean-journal-1.0.tar tzbqweas/bean-journal:1.0
+docker pull tzbqweas/bean-journal:1.1
+docker save -o bean-journal-1.1.tar tzbqweas/bean-journal:1.1
 ```
 
 Copy the archive to the target machine, load it, then use the `docker run` command above:
 
 ```sh
-docker load -i bean-journal-1.0.tar
+docker load -i bean-journal-1.1.tar
 ```
 
 The published image targets `linux/amd64`; build from source on the target machine for other architectures.
@@ -210,4 +220,4 @@ Donations are entirely optional and do not affect access to any features.
 
 ## Version & credits
 
-Current version: **v1.0**. See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
+Current version: **v1.1**. See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.

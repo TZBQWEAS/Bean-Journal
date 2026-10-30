@@ -1,4 +1,5 @@
 const dictionary = {
+  导航菜单: "Navigation menu",
   "当前浏览器不支持安全保存，请使用新版浏览器":
     "Use an up-to-date browser to save safely.",
   "记录已在另一页面更新，请重新打开后再保存":

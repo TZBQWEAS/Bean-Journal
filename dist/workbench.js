@@ -358,7 +358,7 @@ async function saveWorkbench(obj) {
     for (const key of ["machine", "grinder"])
       if (obj[key + "Id"] === "legacy") obj[key + "Id"] = "";
   }
-  obj.id = editing || crypto.randomUUID();
+  obj.id = editing || journalId();
   const next = structuredClone(data);
   if (editing) next[list] = next[list].map((x) => (x.id === editing ? obj : x));
   else next[list].push(obj);

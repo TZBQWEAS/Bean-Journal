@@ -36,6 +36,7 @@ function start(saved) {
     );
   return w;
 }
+(async () => {
 const w = start({
     beans: [{ id: "bean", name: "Test bean", roast: "浅烘" }],
     brews: [],
@@ -48,19 +49,17 @@ const click = (s) => d.querySelector(s).click(),
     el.dispatchEvent(new w.Event("change"));
   },
   submit = () =>
-    d
-      .querySelector("#form")
-      .dispatchEvent(new w.Event("submit", { cancelable: true })),
+    d.querySelector("#form").onsubmit({preventDefault(){},target:d.querySelector("#form")}),
   saved = () => JSON.parse(w.localStorage.getItem("doujian-v1"));
 click("[data-view=devices]");
 click("#addBean");
 field("name", "My machine");
 field("type", "machine");
-submit();
+await submit();
 click("#addBean");
 field("name", "My grinder");
 field("type", "grinder");
-submit();
+await submit();
 assert.equal(saved().devices.length, 2);
 const [machine, grinder] = saved().devices;
 click("[data-view=favorites]");
@@ -75,7 +74,7 @@ field("grind", "5");
 field("machineId", machine.id);
 field("grinderId", grinder.id);
 field("notes", "Preheat, then pull the shot.");
-submit();
+await submit();
 assert.equal(saved().recipes.length, 1);
 assert.equal(
   saved().brews.length,
@@ -96,7 +95,7 @@ assert.equal(d.querySelector("[name=notes]").value, "Actual tasting note");
 assert.equal(d.querySelector("[name=dose]").value, "18");
 assert.equal(d.querySelector("[name=grinderId]").value, grinder.id);
 field("dose", "19");
-submit();
+await submit();
 assert.equal(saved().brews[0].dose, "19");
 assert.equal(saved().recipes[0].dose, "18");
 assert.equal(saved().brews[0].recipeName, "Daily espresso");
@@ -105,14 +104,14 @@ click("[data-view=favorites]");
 click("[data-recipe]");
 field("name", "Updated espresso");
 field("dose", "20");
-submit();
+await submit();
 assert.equal(saved().brews[0].recipeName, "Daily espresso");
 assert.equal(saved().brews[0].dose, "19");
 assert(d.querySelector(".recipe-card").textContent.includes("1"));
 click("[data-view=devices]");
 click('[data-device="' + machine.id + '"]');
 field("name", "Renamed machine");
-submit();
+await submit();
 assert.equal(saved().brews[0].machine, "My machine");
 click('[data-device="' + machine.id + '"]');
 click("#delete");
@@ -127,12 +126,12 @@ assert(
 click("#close");
 click("[data-editbrew]");
 assert.equal(d.querySelector("[name=machine]").value, "My machine");
-submit();
+await submit();
 assert.equal(saved().brews[0].machine, "My machine");
 click("[data-save-recipe]");
 assert.equal(d.querySelector("[name=dose]").value, "19");
 field("name", "Adjusted shot");
-submit();
+await submit();
 assert.equal(saved().recipes.length, 2);
 assert.equal(saved().brews.length, 1);
 click("[data-view=favorites]");
@@ -144,7 +143,7 @@ assert.equal(saved().brews[0].recipeName, "Daily espresso");
 click("[data-view=brews]");
 click("[data-editbrew]");
 assert.equal(d.querySelector("[name=recipeId]").value, recipe.id);
-submit();
+await submit();
 assert.equal(saved().brews[0].recipeName, "Daily espresso");
 const backup = w.validateJournalBackup(saved());
 assert.equal(backup.devices.length, 2);
@@ -193,3 +192,5 @@ console.log(
 );
 setImmediate(() => w.close());
 setImmediate(() => legacy.close());
+
+})().catch(error=>{console.error(error);process.exitCode=1});

@@ -37,6 +37,7 @@ function app(storage = {}, stayHome = false) {
   if (!stayHome) w.document.querySelector("[data-view=beans]").click();
   return w;
 }
+(async () => {
 const w = app(),
   d = w.document;
 const click = (s) => d.querySelector(s).click();
@@ -60,9 +61,7 @@ change("[name=beanType]", "拼配");
 const photo = "data:image/jpeg;base64,/9j/AAAA";
 w.testEval(`draftPhoto=${JSON.stringify(photo)};updatePhotoPreview()`);
 assert.equal(d.querySelector("#photoPreview img").getAttribute("src"), photo);
-d.querySelector("#form").dispatchEvent(
-  new w.Event("submit", { cancelable: true }),
-);
+await d.querySelector("#form").onsubmit({preventDefault(){},target:d.querySelector("#form")});
 assert.equal(
   d.querySelector(".card-body h3").textContent,
   "设置",
@@ -94,16 +93,12 @@ click("#close");
 click("#newBrew");
 assert.equal(d.querySelector("[name=beanId] option").textContent, "设置");
 assert.equal(d.querySelector("[name=method]").value, "手冲");
-d.querySelector("#form").dispatchEvent(
-  new w.Event("submit", { cancelable: true }),
-);
+await d.querySelector("#form").onsubmit({preventDefault(){},target:d.querySelector("#form")});
 click("[data-view=brews]");
 assert(d.querySelector(".brew").textContent.includes("Pour over"));
 assert(!d.querySelector(".brew").textContent.includes("手冲"));
 click("[data-save-recipe]");
-d.querySelector("#form").dispatchEvent(
-  new w.Event("submit", { cancelable: true }),
-);
+await d.querySelector("#form").onsubmit({preventDefault(){},target:d.querySelector("#form")});
 click("[data-view=favorites]");
 assert.equal(d.querySelectorAll(".recipe-card").length, 1);
 click("[data-brew-recipe]");
@@ -140,9 +135,7 @@ const legacy = app({
 legacy.document.querySelector("[data-editbean]").click();
 assert.equal(legacy.document.querySelector("[name=beanType]").value, "未分类");
 assert(!legacy.document.querySelector("#photoPreview img"));
-legacy.document
-  .querySelector("#form")
-  .dispatchEvent(new legacy.Event("submit", { cancelable: true }));
+await legacy.document.querySelector("#form").onsubmit({preventDefault(){},target:legacy.document.querySelector("#form")});
 assert.equal(
   JSON.parse(legacy.localStorage.getItem("doujian-v1")).beans[0].name,
   "Legacy bean",
@@ -204,9 +197,7 @@ assert(
     .querySelector("[name=notes]")
     .value.includes("sample bean card"),
 );
-oldSamples.document
-  .querySelector("#form")
-  .dispatchEvent(new oldSamples.Event("submit", { cancelable: true }));
+await oldSamples.document.querySelector("#form").onsubmit({preventDefault(){},target:oldSamples.document.querySelector("#form")});
 assert.equal(
   JSON.parse(oldSamples.localStorage.getItem("doujian-v1")).beans[0].name,
   "示例 · 耶加雪菲",
@@ -215,9 +206,7 @@ assert.equal(
 oldSamples.document.querySelector("[data-editbean]").click();
 oldSamples.document.querySelector("[name=flavors]").value =
   "My own tasting notes";
-oldSamples.document
-  .querySelector("#form")
-  .dispatchEvent(new oldSamples.Event("submit", { cancelable: true }));
+await oldSamples.document.querySelector("#form").onsubmit({preventDefault(){},target:oldSamples.document.querySelector("#form")});
 oldSamples.savePreference("language", "zh");
 assert(
   oldSamples.document
@@ -240,9 +229,7 @@ assert.equal(
   oldSamples.document.querySelector("[name=beanId] option").textContent,
   "Sample · Yirgacheffe",
 );
-oldSamples.document
-  .querySelector("#form")
-  .dispatchEvent(new oldSamples.Event("submit", { cancelable: true }));
+await oldSamples.document.querySelector("#form").onsubmit({preventDefault(){},target:oldSamples.document.querySelector("#form")});
 oldSamples.document.querySelector("[data-view=brews]").click();
 assert(
   oldSamples.document
@@ -322,9 +309,7 @@ assert.equal(
   mapped.document.querySelector("[name=origin]").value,
   "China / Yunnan",
 );
-mapped.document
-  .querySelector("#form")
-  .dispatchEvent(new mapped.Event("submit", { cancelable: true }));
+await mapped.document.querySelector("#form").onsubmit({preventDefault(){},target:mapped.document.querySelector("#form")});
 const selectedOrigin = JSON.parse(mapped.localStorage.getItem("doujian-v1"))
   .beans[0];
 assert.equal(selectedOrigin.origin, "China / Yunnan");
@@ -366,3 +351,5 @@ console.log(
 );
 for (const a of [w, reloaded, legacy, roastApp, mapped])
   setImmediate(() => a.close());
+
+})().catch(error=>{console.error(error);process.exitCode=1});

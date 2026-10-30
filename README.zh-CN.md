@@ -242,4 +242,4 @@ README.zh-CN.md         简体中文兼容副本
 
 ## 版本与致谢
 
-当前版本：**v1.1**。更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+当前版本：**v1.1** 更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

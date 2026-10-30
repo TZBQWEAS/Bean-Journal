@@ -43,6 +43,21 @@ Explore bean origins on the map and hover over a marker to see the associated be
 
 [![Origin map with a bean-card tooltip](docs/images/origin-map.png)](docs/images/origin-map.png)
 
+### On a phone
+
+Real phone screenshots provided by the project owner. Both images are 658 × 1280 pixels and displayed at the same size. Click either image to view it in full.
+
+<table>
+  <tr>
+    <th>Dashboard & brew calendar</th>
+    <th>Origin map & bean cards</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/images/mobile-dashboard.jpg"><img src="docs/images/mobile-dashboard.jpg" width="329" height="640" alt="Phone dashboard with collapsible navigation and brew calendar" /></a></td>
+    <td align="center"><a href="docs/images/mobile-origin-map.jpg"><img src="docs/images/mobile-origin-map.jpg" width="329" height="640" alt="Phone origin map with bean cards" /></a></td>
+  </tr>
+</table>
+
 ## Features
 
 - **Dashboard:** overview, brew calendar, daily records, monthly summaries and recent brews.

@@ -43,6 +43,20 @@
 
 [![来源地图：原产地标记与豆卡悬浮详情](docs/images/origin-map.png)](docs/images/origin-map.png)
 
+### 手机实拍
+
+以下为项目所有者提供的手机真实截图。两张图片统一为 658 × 1280 像素，以相同尺寸展示，点击可查看原图。
+
+<table>
+  <tr>
+    <th>主界面与冲煮日历</th>
+    <th>来源地图与豆卡</th>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/images/mobile-dashboard.jpg"><img src="docs/images/mobile-dashboard.jpg" width="329" height="640" alt="手机主界面、折叠菜单与冲煮日历" /></a></td>
+    <td align="center"><a href="docs/images/mobile-origin-map.jpg"><img src="docs/images/mobile-origin-map.jpg" width="329" height="640" alt="手机来源地图与豆卡" /></a></td>
+  </tr>
+</table>
 
 ## 功能
 

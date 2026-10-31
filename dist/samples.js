@@ -53,11 +53,15 @@ function localizedBean(bean) {
   if (!bean) return bean;
   const key = sampleKey(bean),
     out = { ...bean };
-  if (!key) return out;
+  if (!key) {
+    out.origin = localizedOrigin(out.origin);
+    return out;
+  }
   const base = sampleDefinitions[key];
   for (const field of Object.keys(base.zh))
     if (bean[field] === base.zh[field])
       out[field] = base[preferences.language][field];
+  out.origin = localizedOrigin(out.origin);
   return out;
 }
 function preserveSampleFields(record, original) {

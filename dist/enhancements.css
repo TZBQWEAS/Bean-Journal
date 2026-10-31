@@ -116,3 +116,18 @@ html.phone-navigation #sidebarMenu .nav-label{display:block}
 }
 
 @media(max-width:700px){#homeView .hero{overflow:hidden}}
+
+.stats [data-view], article.bean[data-editbean]{cursor:pointer}
+.stats [data-view]:focus-visible, article.bean[data-editbean]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+.country-results{max-height:190px;overflow-y:auto;margin-top:6px;border:1px solid var(--line);border-radius:5px;background:var(--paper);padding:4px}
+.country-results button{display:block;width:100%;text-align:left;padding:10px 12px;font-size:13px}
+.country-results button:hover,.country-results button:focus-visible{background:var(--bg);outline:1px solid var(--accent)}
+.brew-time-row{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.fields .brew-time-row>input{flex:1 1 64px;width:64px;min-width:64px;margin-top:0}
+.brew-timer{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.brew-timer .outline{padding:9px 8px;white-space:nowrap}
+.brew-timer output{font-variant-numeric:tabular-nums;color:var(--ink);font-size:18px}
+.card-art[data-roast=medium-dark]{--card-bg:#bc967b;color:#593927}
+.card-art[data-roast=medium-dark] .roast-beans i{background:linear-gradient(110deg,#976342,#583320)}
+[data-theme=dark] .card-art[data-roast=medium-dark]{--card-bg:#50392d;color:#ebcbb0}

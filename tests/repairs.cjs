@@ -95,6 +95,123 @@ function start(shared = { value: JSON.stringify(seed) }) {
   };
 }
 (async () => {
+  const shortcuts = start();
+  for (const [id, view] of [
+    ["sBeans", "beans"],
+    ["sBrews", "brews"],
+    ["sFav", "favorites"],
+  ]) {
+    shortcuts.d.getElementById(id).click();
+    assert.equal(shortcuts.run("view"), view);
+  }
+  shortcuts.run(
+    "data.beans[0].origin='中国 / 云南庄园'; view='beans'; render()",
+  );
+  shortcuts.run("savePreference('language', 'en')");
+  assert.match(
+    shortcuts.d.querySelector(".bean .roast").textContent,
+    /China \/ 云南庄园/,
+  );
+  assert.equal(shortcuts.run("data.beans[0].origin"), "中国 / 云南庄园");
+  shortcuts.d.querySelector(".bean .card-art").click();
+  assert.equal(shortcuts.run("kind"), "bean");
+  assert.equal(shortcuts.d.querySelector("[name=originCountry]").value, "CHN");
+  const countrySearch = shortcuts.d.querySelector("input[type=search]");
+  countrySearch.value = "ethi";
+  countrySearch.dispatchEvent(new shortcuts.w.Event("input"));
+  let countrySelect = shortcuts.d.querySelector("[name=originCountry]");
+  assert(countrySelect.querySelector("option[value=ETH]"));
+  assert(!countrySelect.querySelector("option[value=BRA]"));
+  assert.equal(countrySelect.value, "CHN");
+  countrySelect.value = "ETH";
+  countrySelect.dispatchEvent(new shortcuts.w.Event("change"));
+  assert.equal(
+    shortcuts.d.querySelector("[name=origin]").value,
+    "Ethiopia / 云南庄园",
+  );
+  countrySearch.value = "巴西";
+  countrySearch.dispatchEvent(new shortcuts.w.Event("input"));
+  assert(countrySelect.querySelector("option[value=BRA]"));
+  countrySearch.value = "";
+  countrySearch.dispatchEvent(new shortcuts.w.Event("input"));
+  assert(countrySelect.options.length > 100);
+  shortcuts.d.querySelector("#close").click();
+  shortcuts.d.querySelector("[data-brewbean]").click();
+  assert.equal(shortcuts.run("kind"), "brew");
+  shortcuts.d.querySelector("#close").click();
+  shortcuts.d
+    .querySelector("article.bean")
+    .dispatchEvent(
+      new shortcuts.w.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
+  assert.equal(shortcuts.run("kind"), "bean");
+  shortcuts.run("savePreference('language', 'zh')");
+  assert.match(
+    shortcuts.d.querySelector(".bean .roast").textContent,
+    /中国 \/ 云南庄园/,
+  );
+  assert.equal(
+    shortcuts.run("localizedOrigin('China / My farm')"),
+    "中国 / My farm",
+  );
+  assert.equal(
+    shortcuts.run("localizedOrigin('My custom origin')"),
+    "My custom origin",
+  );
+
+  shortcuts.run("openForm('bean',data.beans[0])");
+  assert(shortcuts.d.querySelector('[name=roast] option[value="中深烘"]'));
+  const newSearch = shortcuts.d.querySelector("input[type=search]");
+  newSearch.value = "China";
+  newSearch.dispatchEvent(new shortcuts.w.Event("input"));
+  const result = shortcuts.d.querySelector(
+    ".country-results [data-country=CHN]",
+  );
+  assert(result);
+  result.click();
+  assert.equal(shortcuts.d.querySelector("[name=originCountry]").value, "CHN");
+  assert.equal(newSearch.value, "中国");
+  assert(shortcuts.d.querySelector(".country-results").hidden);
+  newSearch.value = "no-country-xyz";
+  newSearch.dispatchEvent(new shortcuts.w.Event("input"));
+  assert.match(
+    shortcuts.d.querySelector(".country-results").textContent,
+    /没有匹配/,
+  );
+  shortcuts.run("data.beans[0].roast='中深烘'; view='beans'; render()");
+  assert.equal(
+    shortcuts.d.querySelector(".bean .card-art").dataset.roast,
+    "medium-dark",
+  );
+  shortcuts.d.querySelector('[data-filter="中深烘"]').click();
+  assert(shortcuts.d.querySelector(".bean"));
+  shortcuts.run("openForm('brew')");
+  const timerButton = shortcuts.d.querySelector(".brew-timer button");
+  shortcuts.run("globalThis.timerNow=10000; Date.now=()=>timerNow");
+  timerButton.click();
+  shortcuts.run("timerNow=75500");
+  timerButton.click();
+  assert.equal(shortcuts.d.querySelector("[name=time]").value, "65");
+  assert.equal(
+    shortcuts.d.querySelector(".brew-timer output").textContent,
+    "01:05",
+  );
+  timerButton.click();
+  shortcuts.run("timerNow=78500");
+  shortcuts.run("stopBrewTimer()");
+  assert.equal(shortcuts.d.querySelector("[name=time]").value, "3");
+  timerButton.click();
+  shortcuts.run("openForm('bean')");
+  assert.equal(shortcuts.run("activeBrewTimer"), null);
+  assert(!shortcuts.d.querySelector(".brew-timer"));
+  shortcuts.run("openForm('recipe')");
+  assert(!shortcuts.d.querySelector(".brew-timer"));
+  assert.match(
+    shortcuts.d.querySelector(".settings-version").textContent,
+    /v1.2/,
+  );
+  shortcuts.close();
+
   const a = start();
   a.run("openForm('brew',data.brews[0])");
   assert.equal(a.d.querySelector("[name=timeOfDay]").value, "");

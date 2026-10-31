@@ -290,6 +290,7 @@ function wireEquipmentFields() {
     };
 }
 function openWorkbenchForm(type, item = {}, reuse = false) {
+  disposeBrewTimer();
   captureFormBaseline(type, reuse ? null : item.id);
   kind = type;
   editing = reuse ? null : item.id || null;
@@ -325,6 +326,7 @@ function openWorkbenchForm(type, item = {}, reuse = false) {
   if ((type === "brew" || type === "recipe") && !editing)
     item = freshEquipment(item);
   setupWorkbenchFields(type, item);
+  if (type === "brew") attachBrewTimer();
   localize();
   $("#modal").showModal();
 }
@@ -687,4 +689,78 @@ function validateJournalBackup(obj) {
     }),
   );
   return result;
+}
+
+let activeBrewTimer = null;
+function stopBrewTimer() {
+  if (activeBrewTimer) activeBrewTimer.stop();
+}
+function disposeBrewTimer() {
+  if (activeBrewTimer) activeBrewTimer.dispose();
+  activeBrewTimer = null;
+}
+function attachBrewTimer() {
+  const input = document.querySelector("[name=time]");
+  const bar = document.createElement("div");
+  bar.className = "brew-timer";
+  const clock = document.createElement("output");
+  clock.textContent = "00:00";
+  clock.setAttribute(
+    "aria-label",
+    preferences.language === "en" ? "Elapsed brew time" : "已计时时间",
+  );
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "outline";
+  button.textContent = tr("开始计时");
+  bar.append(clock, button);
+  const row = document.createElement("div");
+  row.className = "brew-time-row";
+  input.before(row);
+  row.append(input, bar);
+  let started = null,
+    interval = null;
+  const elapsed = () =>
+    Math.min(604800, Math.max(0, Math.floor((Date.now() - started) / 1000)));
+  const paint = () => {
+    const seconds = elapsed();
+    clock.textContent =
+      String(Math.floor(seconds / 60)).padStart(2, "0") +
+      ":" +
+      String(seconds % 60).padStart(2, "0");
+  };
+  const dispose = () => {
+    clearInterval(interval);
+    started = null;
+    document
+      .querySelector("#modal")
+      .removeEventListener("close", disposeBrewTimer);
+  };
+  const stop = () => {
+    if (started === null) return;
+    paint();
+    input.value = String(Math.max(1, elapsed()));
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    clearInterval(interval);
+    started = null;
+    button.textContent = tr("重新计时");
+  };
+  button.onclick = () => {
+    if (started !== null) {
+      stop();
+      return;
+    }
+    started = Date.now();
+    paint();
+    button.textContent = tr("停止并填入");
+    interval = setInterval(() => {
+      if (!bar.isConnected || !document.querySelector("#modal").open) {
+        disposeBrewTimer();
+        return;
+      }
+      paint();
+    }, 200);
+  };
+  activeBrewTimer = { stop, dispose };
+  document.querySelector("#modal").addEventListener("close", disposeBrewTimer);
 }

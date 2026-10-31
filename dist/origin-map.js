@@ -127,9 +127,31 @@ function originGroups() {
 function countryName(country) {
   return preferences.language === "en" ? country.en : country.zh;
 }
+// Translate recognized country prefixes only; preserve region and farm text.
+function localizedOrigin(origin) {
+  const value = String(origin || "");
+  const candidates = originCountries
+    .flatMap((c) =>
+      [...new Set([c.zh, c.en, ...c.aliases])].map((alias) => ({ c, alias })),
+    )
+    .sort((a, b) => b.alias.length - a.alias.length);
+  const match = candidates.find(
+    ({ alias }) =>
+      value.toLowerCase().startsWith(alias.toLowerCase()) &&
+      (value.length === alias.length ||
+        /^\s*[/／,，·—-]/.test(value.slice(alias.length))),
+  );
+  return match ? countryName(match.c) + value.slice(match.alias.length) : value;
+}
 function mapBeanSummary(bean) {
   const roast =
-    bean.roast === "深烘" ? "dark" : bean.roast === "中烘" ? "medium" : "light";
+    bean.roast === "深烘"
+      ? "dark"
+      : bean.roast === "中深烘"
+        ? "medium-dark"
+        : bean.roast === "中烘"
+          ? "medium"
+          : "light";
   return `<div class="map-bean map-bean-card"><div class="card-art" data-roast="${roast}"><span class="roast-beans" aria-hidden="true"><i></i><i></i><i></i></span><span class="roast">${esc(tr(bean.roast || ""))}</span></div><div class="map-bean-body"><strong data-user>${esc(bean.name)}</strong><p><span data-user>${esc(bean.origin || tr("产地未填写"))}</span> · ${esc(tr(bean.beanType || "未分类"))}</p>${bean.flavors ? `<p data-user>${esc(bean.flavors)}</p>` : ""}</div></div>`;
 }
 
@@ -239,6 +261,126 @@ function addOriginSuggestions() {
     `<option value="custom">${tr("其他 / 多产地")}</option>`;
   select.value = country ? country.id : original ? "custom" : "";
   label.append(select);
+  const search = document.createElement("input");
+  search.type = "search";
+  search.placeholder =
+    preferences.language === "en" ? "Search countries…" : "搜索国家 / 地区…";
+  search.setAttribute("aria-label", search.placeholder);
+  search.autocomplete = "off";
+  label.insertBefore(search, select);
+  select.hidden = true;
+  search.value = select.value ? select.selectedOptions[0].textContent : "";
+  const results = document.createElement("div");
+  results.className = "country-results";
+  results.hidden = true;
+  results.setAttribute(
+    "aria-label",
+    preferences.language === "en" ? "Matching countries" : "匹配国家",
+  );
+  label.append(results);
+  search.setAttribute("aria-expanded", "false");
+  const hideResults = () => {
+    results.hidden = true;
+    search.setAttribute("aria-expanded", "false");
+  };
+  function showResults() {
+    const query = search.value.trim().toLowerCase();
+    results.replaceChildren();
+    const options = allOptions.filter((option) => {
+      const c = originCountries.find((country) => country.id === option.value);
+      return (
+        option.value &&
+        (!query ||
+          (c
+            ? [c.zh, c.en, ...c.aliases].some((name) =>
+                name.toLowerCase().includes(query),
+              )
+            : option.textContent.toLowerCase().includes(query)))
+      );
+    });
+    for (const option of options) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = option.textContent;
+      button.dataset.country = option.value;
+      button.onclick = () => {
+        search.value = "";
+        filterCountries();
+        select.value = option.value;
+        select.dispatchEvent(new Event("change"));
+        search.value = option.textContent;
+        hideResults();
+        search.focus();
+      };
+      results.append(button);
+    }
+    if (!options.length)
+      results.textContent =
+        preferences.language === "en"
+          ? "No matching countries"
+          : "没有匹配的国家";
+    results.hidden = false;
+    search.setAttribute("aria-expanded", "true");
+  }
+  search.onfocus = () => {
+    if (search.value === select.selectedOptions[0]?.textContent)
+      search.select();
+  };
+  search.onclick = () => {
+    search.value = "";
+    filterCountries();
+    showResults();
+  };
+  label.addEventListener("focusout", (event) => {
+    if (!label.contains(event.relatedTarget)) {
+      hideResults();
+      search.value = select.value ? select.selectedOptions[0].textContent : "";
+    }
+  });
+  const allOptions = [...select.options].map((option) =>
+    option.cloneNode(true),
+  );
+  let selectedCountry = select.value;
+  function filterCountries() {
+    const query = search.value.trim().normalize("NFKC").toLowerCase();
+    select.replaceChildren(
+      ...allOptions
+        .filter((option) => {
+          const c = originCountries.find(
+            (country) => country.id === option.value,
+          );
+          return (
+            !c ||
+            option.value === selectedCountry ||
+            [c.zh, c.en, ...c.aliases].some((name) =>
+              name.normalize("NFKC").toLowerCase().includes(query),
+            )
+          );
+        })
+        .map((option) => option.cloneNode(true)),
+    );
+    select.value = selectedCountry;
+  }
+  search.oninput = () => {
+    filterCountries();
+    showResults();
+  };
+  search.onkeydown = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      hideResults();
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      results.querySelector("button")?.focus();
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      results.querySelector("button")?.click();
+    }
+  };
+
   input.type = "hidden";
   input.removeAttribute("list");
   label.append(input);
@@ -253,6 +395,9 @@ function addOriginSuggestions() {
       ? [countryName(selected), region].filter(Boolean).join(" / ")
       : region;
   };
-  select.onchange = sync;
+  select.onchange = () => {
+    selectedCountry = select.value;
+    sync();
+  };
   detailInput.oninput = sync;
 }

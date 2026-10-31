@@ -287,7 +287,7 @@ function render() {
     html = beans
       .map(
         (b, i) =>
-          `<article class="bean"><div class="card-art" data-roast="${b.roast === "深烘" ? "dark" : b.roast === "中烘" ? "medium" : "light"}"><span class="origin">BEAN CARD / ${String(i + 1).padStart(2, "0")}</span><span class="roast-beans" aria-hidden="true"><i></i><i></i><i></i></span><span class="roast"><span data-user>${esc(b.origin || tr("产地待记录"))}</span> · ${esc(tr(b.roast))}</span></div><div class="card-body"><h3><span data-user>${esc(b.name)}</span></h3><div class="meta"><span data-user>${esc(b.roaster || tr("我的咖啡豆"))}</span> · <span data-user>${esc(b.process || tr("处理法待记录"))}</span></div><div class="bean-kind">${esc(tr(b.beanType || "未分类"))}</div><div class="tags">${(
+          `<article class="bean" data-editbean="${esc(b.id)}" tabindex="0" aria-label="${esc(b.name)}"><div class="card-art" data-roast="${b.roast === "深烘" ? "dark" : b.roast === "中深烘" ? "medium-dark" : b.roast === "中烘" ? "medium" : "light"}"><span class="origin">BEAN CARD / ${String(i + 1).padStart(2, "0")}</span><span class="roast-beans" aria-hidden="true"><i></i><i></i><i></i></span><span class="roast"><span data-user>${esc(b.origin || tr("产地待记录"))}</span> · ${esc(tr(b.roast))}</span></div><div class="card-body"><h3><span data-user>${esc(b.name)}</span></h3><div class="meta"><span data-user>${esc(b.roaster || tr("我的咖啡豆"))}</span> · <span data-user>${esc(b.process || tr("处理法待记录"))}</span></div><div class="bean-kind">${esc(tr(b.beanType || "未分类"))}</div><div class="tags">${(
             b.flavors || tr("风味待探索")
           )
             .split(/[,，、]/)
@@ -336,6 +336,7 @@ function select(label, name, values, value) {
   return `<label>${label}<select name="${name}">${values.map((v) => `<option value="${esc(v)}" ${v === value ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>`;
 }
 function openForm(type, item = {}, reuse = false) {
+  disposeBrewTimer();
   captureFormBaseline(type, reuse ? null : item.id);
   if (type !== "bean") {
     openWorkbenchForm(type, item, reuse);
@@ -374,7 +375,12 @@ function openForm(type, item = {}, reuse = false) {
         ) +
         field("烘焙商", "roaster", item.roaster) +
         field("产地 / 庄园", "origin", item.origin) +
-        select("烘焙程度", "roast", ["浅烘", "中烘", "深烘"], item.roast) +
+        select(
+          "烘焙程度",
+          "roast",
+          ["浅烘", "中烘", "中深烘", "深烘"],
+          item.roast,
+        ) +
         select(
           "咖啡豆种类",
           "beanType",
@@ -476,6 +482,7 @@ $("#form").onsubmit = async (e) => {
       toast("照片处理中，请稍候");
       return;
     }
+    if (kind === "brew") stopBrewTimer();
     const obj = Object.fromEntries(new FormData(e.target));
     for (const k in obj) obj[k] = obj[k].trim();
     if (kind !== "bean") {
@@ -564,7 +571,9 @@ $("#addBean").onclick = () =>
   );
 $("#search").oninput = render;
 document.addEventListener("click", (e) => {
-  const b = e.target.closest("button");
+  const b = e.target.closest(
+    "button, .stats [data-view], article.bean[data-editbean]",
+  );
   if (!b) return;
   const d = b.dataset;
   if (d.view) {
@@ -719,3 +728,14 @@ window
   .addEventListener("change", updateMobileNavigation);
 updateMobileNavigation();
 render();
+
+// Keyboard activation mirrors the existing click actions without intercepting child buttons.
+document.addEventListener("keydown", (event) => {
+  if (
+    (event.key === "Enter" || event.key === " ") &&
+    event.target.matches(".stats [data-view], article.bean[data-editbean]")
+  ) {
+    event.preventDefault();
+    event.target.click();
+  }
+});

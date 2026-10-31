@@ -1,5 +1,28 @@
 # 更新记录
 
+## v1.2 — 2026-10-31
+
+- 首页数据统计支持点击跳转，豆卡支持整卡点击查看。
+- 国家搜索直接展示可点击的匹配结果，支持中英文搜索。
+- 修复切换语言后豆卡国家名称未更新的问题，保留产区与庄园原文。
+- 新增中深烘选项、筛选及对应豆卡配色。
+- 冲煮记录新增萃取计时器，位于时间输入框右侧，停止后自动填入秒数。
+- Docker 标签：1.2、latest；平台：linux/amd64。
+
+验证：回归测试及镜像健康检查通过；手机真机测试尚待用户确认。发布说明见 [v1.2](docs/releases/v1.2.md)。
+
+### English
+
+- Click dashboard totals to navigate and click bean cards to open details.
+- Search countries in Chinese or English and choose directly from matching results.
+- Country names update immediately when switching languages; region and farm text stays unchanged.
+- Add medium-dark roast selection, filtering and card colors.
+- Add a brew timer beside the extraction-time input; stopping fills in elapsed seconds.
+- Docker tags: 1.2, latest; platform: linux/amd64.
+
+Validation: automated regression tests and container health checks passed. Full phone/iPad hardware testing remains pending.
+
+
 ## v1.1 — 2026-10-30
 
 - 修复局域网 HTTP 下新增豆卡、冲煮、设备和配方无法保存的问题。

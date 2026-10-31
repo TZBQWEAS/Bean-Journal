@@ -7,19 +7,22 @@
 </p>
 
 <p align="center">A little ritual, every day. Keep your beans, brews and favorite recipes in one place.</p>
-<p align="center"><strong>v1.1 · English / 简体中文 · Light & dark themes · Browser-local storage</strong></p>
+<p align="center"><strong>v1.2 · English / 简体中文 · Light & dark themes · Browser-local storage</strong></p>
 
 Bean Journal is a personal coffee notebook built with plain HTML, CSS and JavaScript. Collect bean cards, record each cup and keep reusable recipes—without a backend or build step.
 
-## What's new in v1.1
+## What's new in v1.2
 
-- Fix saving beans, brews, equipment and recipes over LAN HTTP.
-- Prevent duplicate submissions, reopen closed HTTP save connections, and retain cross-tab conflict protection.
-- Add a collapsible phone menu in both orientations; keep navigation expanded in iPad split view.
-- Improve narrow forms and dialog scrolling, align iPad Safari inputs, selects and date controls, and fix horizontal overflow on the phone dashboard.
-- Docker tags `1.1` and `latest` point to this release; platform: `linux/amd64`.
+- Click dashboard totals to navigate and click bean cards to open details.
+- Search countries in Chinese or English and choose directly from matching results.
+- Country names update immediately when switching languages; region and farm text stays unchanged.
+- Add medium-dark roast selection, filtering and card colors.
+- Add a brew timer beside the extraction-time input; stopping fills in elapsed seconds.
+- Docker tags: 1.2, latest; platform: linux/amd64.
 
-Data remains in each browser. v1.1 does not add accounts or cross-device sync. Export a backup in Settings before upgrading and keep the same access address and port. See [CHANGELOG.md](CHANGELOG.md) for the full release notes.
+Data remains in each browser. v1.2 does not add accounts or cross-device sync. Export a backup in Settings before upgrading and keep the same access address and port. See [CHANGELOG.md](CHANGELOG.md) for the full release notes.
+
+Release notes: [v1.2 — 中文 / English](docs/releases/v1.2.md). Earlier changes: [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
 
@@ -128,7 +131,7 @@ docker compose up -d
 | Item | Value |
 | --- | --- |
 | Image | `tzbqweas/bean-journal` |
-| Tags | `1.1`, `latest` |
+| Tags | `1.2`, `latest` |
 | Published architecture | `linux/amd64` |
 | Container port | `8080` |
 | Health check | `/healthz` |
@@ -136,7 +139,7 @@ docker compose up -d
 | Data volume | Not required |
 
 
-The port is bound to localhost by default. Use an HTTPS reverse proxy for remote access; plain HTTP on a LAN IP may lack the secure context required for Web Locks and saving. Change only the left side of the mapping for another host port, for example `127.0.0.1:8088:8080`.
+The port is bound to localhost by default. Use an HTTPS reverse proxy for remote access; LAN HTTP saving is supported through a compatibility fallback when Web Locks is unavailable. Change only the left side of the mapping for another host port, for example `127.0.0.1:8088:8080`.
 
 **Data remains in browser storage, not in the container.** There is no cloud sync. Export a backup from Settings before changing the domain, protocol or port, then import it at the new address.
 
@@ -151,7 +154,7 @@ docker compose up -d --build
 The repository's bundled `compose.yaml` builds locally; it differs from the image-only example above. You can also build separately:
 
 ```sh
-docker build -t bean-journal:latest
+docker build -t bean-journal:1.2 .
 ```
 
 The image includes only static site files and server configuration, without development dependencies, README screenshots or payment QR codes.
@@ -208,7 +211,7 @@ README.zh-CN.md         Simplified Chinese compatibility copy
 
 All records and photos are stored in **this browser's localStorage**. **There is no cloud sync.** To move to another browser or domain, export a backup from Settings and import it at the destination. Browser cleanup and storage limits can affect your data; keep regular backups.
 
-Use a modern browser supporting **Web Locks**. Deploy over **HTTPS**; use localhost or 127.0.0.1 for development. Independent additions from multiple tabs are merged, while conflicting edits to the same record are rejected with a prompt to reopen it.
+Use a modern browser. Saving uses **Web Locks** when available and an **IndexedDB** fallback on LAN HTTP. Deploy over **HTTPS**; use localhost or 127.0.0.1 for development. Independent additions from multiple tabs are merged, while conflicting edits to the same record are rejected with a prompt to reopen it.
 
 Deploy `dist/` as the static site directory. No API keys or server environment variables are needed. This repository excludes Sites hosting identity, deployment credentials and personal backup files.
 
@@ -234,6 +237,5 @@ Donations are entirely optional and do not affect access to any features.
 
 ## Version & credits
 
-Current version: **v1.1**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
-
+Current version: **v1.2**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
 

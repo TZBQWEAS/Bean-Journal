@@ -45,6 +45,7 @@ function start(shared = { value: JSON.stringify(seed) }) {
       { url: "https://coffee.test", runScripts: "outside-only" },
     ),
     w = dom.window;
+  w.JOURNAL_SERVER = false;
   w.structuredClone = structuredClone;
   w.confirm = () => true;
   w.setTimeout = () => 0;
@@ -74,6 +75,7 @@ function start(shared = { value: JSON.stringify(seed) }) {
     },
   };
   for (const f of [
+    "journal-model",
     "preferences",
     "samples",
     "map-data",
@@ -208,7 +210,7 @@ function start(shared = { value: JSON.stringify(seed) }) {
   assert(!shortcuts.d.querySelector(".brew-timer"));
   assert.match(
     shortcuts.d.querySelector(".settings-version").textContent,
-    /v1.2/,
+    /v1.3/,
   );
   shortcuts.close();
 

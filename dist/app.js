@@ -10,12 +10,186 @@ function toast(t) {
   $("#toast").style.display = "block";
   setTimeout(() => ($("#toast").style.display = "none"), 2800);
 }
+
+// Only an explicitly loaded static configuration may enable local storage.
+const serverMode = window.JOURNAL_SERVER !== false;
+let serverInstance = null,
+  requestSequence = 0,
+  acceptedSequence = 0;
+let formServerInstance = null;
+let serverReady = !serverMode,
+  serverRevision = -1,
+  serverLoading = false;
+let serverWriteQueue = Promise.resolve(),
+  serverWrites = 0,
+  serverRefreshing = false;
+let legacyBrowserJournal = null;
+async function readServerJournal(conditional = false) {
+  const requestId = ++requestSequence;
+  const headers = { Accept: "application/json" };
+  if (conditional && serverRevision >= 0)
+    headers["If-None-Match"] =
+      '"' + serverInstance + ":" + serverRevision + '"';
+  const response = await fetch("/api/journal", { headers, cache: "no-store" });
+  if (response.status === 304) return null;
+  if (!response.ok) throw Error("server");
+  const snapshot = await response.json();
+  if (
+    !Number.isSafeInteger(snapshot.revision) ||
+    typeof snapshot.instanceId !== "string" ||
+    !snapshot.instanceId
+  )
+    throw Error("server");
+  snapshot.requestId = requestId;
+  snapshot.journal = validateJournalBackup(snapshot.journal);
+  return snapshot;
+}
+function acceptServerSnapshot(snapshot) {
+  if (
+    snapshot &&
+    snapshot.requestId >= acceptedSequence &&
+    (snapshot.instanceId !== serverInstance ||
+      snapshot.revision >= serverRevision)
+  ) {
+    acceptedSequence = snapshot.requestId;
+    serverInstance = snapshot.instanceId;
+    serverRevision = snapshot.revision;
+    data = snapshot.journal;
+    render();
+  }
+}
+async function initializeServerJournal() {
+  if (serverLoading || serverReady) return;
+  serverLoading = true;
+  try {
+    const snapshot = await readServerJournal();
+    acceptServerSnapshot(snapshot);
+    serverReady = true;
+    if (
+      snapshot.revision === 0 &&
+      legacyBrowserJournal &&
+      ["beans", "brews", "devices", "recipes"].some(
+        (list) => legacyBrowserJournal[list]?.length,
+      )
+    ) {
+      const old = legacyBrowserJournal;
+      legacyBrowserJournal = null;
+      if (
+        confirm(
+          tr(
+            "服务器暂无记录，是否将此浏览器已有记录导入服务器？浏览器原数据会保留。",
+          ),
+        )
+      ) {
+        if (
+          await persistToServer(validateJournalBackup(old), { replace: true })
+        )
+          toast("备份已恢复");
+      }
+    }
+  } catch {
+    toast("无法读取服务器数据，请稍后重试");
+  } finally {
+    serverLoading = false;
+  }
+}
+async function refreshServerJournal(force = false) {
+  if (!serverReady) {
+    await initializeServerJournal();
+    return serverReady;
+  }
+  if (force) await serverWriteQueue;
+  if (
+    !force &&
+    (serverRefreshing ||
+      serverWrites ||
+      document.hidden ||
+      document.querySelector("#modal")?.open)
+  )
+    return false;
+  serverRefreshing = true;
+  try {
+    const snapshot = await readServerJournal(true);
+    // Do not overwrite a newer save with an earlier in-flight response.
+    if (!serverWrites) acceptServerSnapshot(snapshot);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    serverRefreshing = false;
+  }
+}
+function persistToServer(next, { replace = false } = {}) {
+  if (!serverReady) {
+    toast("正在连接服务器，请稍后重试");
+    return Promise.resolve(false);
+  }
+  const base = structuredClone(data),
+    wanted = structuredClone(next);
+  const baseline = formBaseline && structuredClone(formBaseline);
+  const replacementRevision = serverRevision;
+  const expectedInstance = document.querySelector("#modal")?.open
+    ? formServerInstance
+    : serverInstance;
+  serverWrites++;
+  const job = async () => {
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const current = await readServerJournal();
+        if (current.instanceId !== expectedInstance) {
+          acceptServerSnapshot(current);
+          throw Error("conflict");
+        }
+        let merged;
+        if (replace) {
+          if (current.revision !== replacementRevision) throw Error("conflict");
+          merged = { ...wanted, generation: journalId() };
+        } else merged = mergeJournal(base, wanted, current.journal, baseline);
+        merged = validateJournalBackup(merged);
+        const saveRequestId = ++requestSequence;
+        const response = await fetch("/api/journal", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Bean-Journal": "1",
+          },
+          body: JSON.stringify({
+            expectedRevision: current.revision,
+            expectedInstance: current.instanceId,
+            journal: merged,
+          }),
+        });
+        if (response.status === 409) continue;
+        if (!response.ok) throw Error("server");
+        const saved = await response.json();
+        saved.journal = validateJournalBackup(saved.journal);
+        if (saved.instanceId !== current.instanceId) throw Error("conflict");
+        saved.requestId = saveRequestId;
+        acceptServerSnapshot(saved);
+        return true;
+      }
+      throw Error("conflict");
+    } catch (error) {
+      saveError(error);
+      return false;
+    } finally {
+      serverWrites--;
+    }
+  };
+  const result = serverWriteQueue.then(job);
+  serverWriteQueue = result.catch(() => false);
+  return result;
+}
 try {
   const saved = JSON.parse(localStorage.getItem(key));
   if (saved && Array.isArray(saved.beans) && Array.isArray(saved.brews))
     data = normalizeJournal(saved);
 } catch {
   setTimeout(() => toast("无法读取已有记录，请检查浏览器存储或导入备份"), 100);
+}
+if (serverMode) {
+  legacyBrowserJournal = structuredClone(data);
+  data = { beans: [], brews: [], devices: [], recipes: [], schemaVersion: 2 };
 }
 const esc = (s) =>
   String(s ?? "").replace(
@@ -28,6 +202,7 @@ const esc = (s) =>
 const date = () => new Date().toLocaleDateString("sv-SE");
 let formBaseline = null;
 function captureFormBaseline(type, id) {
+  formServerInstance = serverInstance;
   const list =
     type === "bean"
       ? "beans"
@@ -40,40 +215,7 @@ function captureFormBaseline(type, id) {
     ? { list, id, record: structuredClone(data[list].find((x) => x.id === id)) }
     : null;
 }
-function sameRecord(a, b) {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-function mergeJournal(base, wanted, current, baseline) {
-  if ((base.generation || "") !== (current.generation || ""))
-    throw Error("conflict");
-  if (
-    baseline &&
-    !sameRecord(
-      current[baseline.list].find((r) => r.id === baseline.id),
-      baseline.record,
-    )
-  )
-    throw Error("conflict");
-  const merged = { ...current };
-  for (const list of ["beans", "brews", "devices", "recipes"]) {
-    const before = new Map(base[list].map((r) => [r.id, r])),
-      after = new Map(wanted[list].map((r) => [r.id, r])),
-      latest = new Map(current[list].map((r) => [r.id, r]));
-    for (const id of new Set([...before.keys(), ...after.keys()])) {
-      const old = before.get(id),
-        next = after.get(id);
-      if (sameRecord(old, next)) continue;
-      const expected =
-        baseline?.list === list && baseline.id === id ? baseline.record : old;
-      if (!sameRecord(latest.get(id), expected)) throw Error("conflict");
-      if (next) latest.set(id, next);
-      else latest.delete(id);
-    }
-    merged[list] = [...latest.values()];
-  }
-  merged.schemaVersion = 2;
-  return merged;
-}
+
 // getRandomValues is also available on LAN HTTP origins.
 function journalId() {
   if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -142,6 +284,10 @@ function withJournalLock(write, reconnect = true) {
   );
 }
 function saveError(error) {
+  if (serverMode && error?.message !== "conflict") {
+    toast("保存失败：无法写入服务器，请检查服务和磁盘空间");
+    return;
+  }
   toast(
     error?.message === "conflict"
       ? "记录已在另一页面更新，请重新打开后再保存"
@@ -149,6 +295,7 @@ function saveError(error) {
   );
 }
 function persist(next, { replace = false } = {}) {
+  if (serverMode) return persistToServer(next, { replace });
   try {
     const initialRaw = localStorage.getItem(key),
       base = structuredClone(data),
@@ -195,6 +342,7 @@ function persist(next, { replace = false } = {}) {
   }
 }
 function refreshStoredJournal() {
+  if (serverMode) return refreshServerJournal();
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return;
@@ -336,6 +484,10 @@ function select(label, name, values, value) {
   return `<label>${label}<select name="${name}">${values.map((v) => `<option value="${esc(v)}" ${v === value ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>`;
 }
 function openForm(type, item = {}, reuse = false) {
+  if (serverMode && !serverReady) {
+    toast("正在连接服务器，请稍后重试");
+    return;
+  }
   disposeBrewTimer();
   captureFormBaseline(type, reuse ? null : item.id);
   if (type !== "bean") {
@@ -652,8 +804,13 @@ document.addEventListener("click", (e) => {
     });
   }
 });
-$("#export").onclick = () => {
-  refreshStoredJournal();
+$("#export").onclick = async () => {
+  if (serverMode) {
+    if (!(await refreshServerJournal(true))) {
+      toast("无法读取服务器数据，请稍后重试");
+      return;
+    }
+  } else refreshStoredJournal();
   const blob = new Blob([JSON.stringify({ version: 2, ...data }, null, 2)], {
       type: "application/json",
     }),
@@ -670,7 +827,7 @@ $("#importFile").onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    if (file.size > 25000000) throw Error();
+    if (file.size > (serverMode ? 64000000 : 25000000)) throw Error();
     const obj = JSON.parse(await file.text());
     const imported = validateJournalBackup(obj);
     if (
@@ -728,6 +885,13 @@ window
   .addEventListener("change", updateMobileNavigation);
 updateMobileNavigation();
 render();
+if (serverMode) {
+  initializeServerJournal();
+  setInterval(() => refreshServerJournal(), 5000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshServerJournal();
+  });
+}
 
 // Keyboard activation mirrors the existing click actions without intercepting child buttons.
 document.addEventListener("keydown", (event) => {

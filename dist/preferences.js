@@ -181,6 +181,16 @@ const dictionary = {
   "设置保存失败，请检查浏览器存储":
     "Could not save preferences. Check browser storage.",
 };
+Object.assign(dictionary, {
+  "正在连接服务器，请稍后重试":
+    "Connecting to the server. Please try again shortly.",
+  "无法读取服务器数据，请稍后重试":
+    "Cannot load server data. Please try again.",
+  "保存失败：无法写入服务器，请检查服务和磁盘空间":
+    "Save failed. Check the server and available disk space.",
+  "服务器暂无记录，是否将此浏览器已有记录导入服务器？浏览器原数据会保留。":
+    "The server is empty. Import this browser's existing records? The original browser data will be kept.",
+});
 const reverseDictionary = Object.fromEntries(
   Object.entries(dictionary).map(([a, b]) => [b, a]),
 );
@@ -252,13 +262,7 @@ document.querySelector("#themeSelect").onchange = (e) =>
 let draftPhoto = "",
   photoBusy = false,
   photoGeneration = 0;
-function safePhoto(value) {
-  return (
-    typeof value === "string" &&
-    value.length < 1500000 &&
-    /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(value)
-  );
-}
+
 function attachPhotoEditor(item) {
   draftPhoto = safePhoto(item.photo) ? item.photo : "";
   const box = document.createElement("section");
@@ -343,15 +347,6 @@ async function resizePhoto(file) {
   }
 }
 
-function validDateValue(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [y, m, d] = value.split("-").map(Number);
-  if (y < 1 || m < 1 || m > 12 || d < 1) return false;
-  const leap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
-  return (
-    d <= [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]
-  );
-}
 function validateDateField(input) {
   const valid =
     (!input.value && !input.required) || validDateValue(input.value);
@@ -360,24 +355,59 @@ function validateDateField(input) {
 }
 function localizeDateInputs() {
   document
-    .querySelectorAll("input[type=date],input[data-date-input]")
+    .querySelectorAll(
+      "input[type=date]:not([data-date-picker]),input[data-date-input]",
+    )
     .forEach((input) => {
       input.dataset.dateInput = "true";
       const value = input.value;
-      input.type = preferences.language === "en" ? "text" : "date";
-      if (preferences.language === "en") {
-        input.placeholder = "YYYY-MM-DD";
-        input.maxLength = 10;
-        input.setAttribute("pattern", "[0-9]{4}-[0-9]{2}-[0-9]{2}");
-        input.setAttribute("aria-description", "YYYY-MM-DD");
-      } else {
-        input.removeAttribute("placeholder");
-        input.removeAttribute("pattern");
-        input.removeAttribute("maxlength");
-        input.removeAttribute("aria-description");
-      }
+      input.type = "text";
+      input.placeholder = "YYYY-MM-DD";
+      input.maxLength = 10;
+      input.setAttribute("pattern", "[0-9]{4}-[0-9]{2}-[0-9]{2}");
+      input.setAttribute("aria-description", "YYYY-MM-DD");
       input.value = value;
-      input.oninput = () => validateDateField(input);
+      let wrapper = input.closest(".date-field");
+      if (!wrapper) {
+        wrapper = document.createElement("span");
+        wrapper.className = "date-field";
+        input.before(wrapper);
+        wrapper.append(input);
+        const control = document.createElement("span");
+        control.className = "date-picker-control";
+        control.innerHTML =
+          '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 5h14v16H5zM5 10h14M8 2v6M16 2v6M8 14h2M14 14h2M8 17h2"/></svg>';
+        const picker = document.createElement("input");
+        picker.type = "date";
+        picker.dataset.datePicker = "true";
+        picker.onchange = () => {
+          input.value = picker.value;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        };
+        // Keep the native date control for mobile Safari and desktop calendars.
+        picker.onclick = () => {
+          if (typeof picker.showPicker === "function") {
+            try {
+              picker.showPicker();
+            } catch {
+              /* Native click remains available. */
+            }
+          }
+        };
+        control.append(picker);
+        wrapper.append(control);
+      }
+      const picker = wrapper.querySelector("[data-date-picker]");
+      picker.setAttribute(
+        "aria-label",
+        preferences.language === "en" ? "Choose date" : "选择日期",
+      );
+      picker.value = validDateValue(input.value) ? input.value : "";
+      input.oninput = () => {
+        validateDateField(input);
+        picker.value = validDateValue(input.value) ? input.value : "";
+      };
       input.oninvalid = () => validateDateField(input);
       if (input.value) validateDateField(input);
       else input.setCustomValidity("");

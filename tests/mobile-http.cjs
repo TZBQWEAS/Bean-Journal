@@ -46,6 +46,7 @@ function start(shared = { value: JSON.stringify(seed) }) {
       { url: "http://192.168.1.10:8887", runScripts: "outside-only" },
     ),
     w = dom.window;
+  w.JOURNAL_SERVER = false;
   w.structuredClone = structuredClone;
   Object.defineProperty(w.crypto, "randomUUID", { value: undefined });
   shared.idb ??= new IDBFactory();
@@ -70,6 +71,7 @@ function start(shared = { value: JSON.stringify(seed) }) {
     },
   });
   for (const f of [
+    "journal-model",
     "preferences",
     "samples",
     "map-data",

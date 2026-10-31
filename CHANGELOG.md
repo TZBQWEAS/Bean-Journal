@@ -1,5 +1,47 @@
 # 更新记录
 
+## v1.3 — 2026-10-31
+
+欢迎使用 **Bean Journal · 豆间 v1.3**！本次更新带来 SQLite 自托管多端同步和更完整的设备管理。
+
+### 中文
+
+- 网页、Node.js 服务和 SQLite 集成到一个 Docker 镜像，电脑、手机和 iPad 访问同一实例即可共享豆卡、照片、冲煮、配方和设备。
+- 数据通过 `/data` 数据卷持久化，重建容器后仍保留；语言和主题各设备独立保存。
+- 设备品牌与型号分别填写，新增买入价格、自定义货币单位、买入日期，允许修改设备类型。
+- 设备只停用或重新启用，保留历史记录；已停用设备不出现在新记录的设备选择中。
+- 日期统一为 `YYYY-MM-DD`，保留系统日历选择。
+- 拦截同一记录的过期编辑，以及跨设备停用或改型后的过期设备选择。
+- 修复配置未加载时误存本地、恢复旧数据库后页面不更新的问题，并防止旧表单覆盖恢复的数据。
+
+### 升级须知
+
+**v1.2 的数据在各浏览器内；v1.3 的 Docker 版数据保存在服务器。** 升级前先从旧网站设置导出 JSON 备份。启动 v1.3 后再导入共享实例；导入会替换该实例的全部记录。首次连接空数据库时也可确认导入同地址浏览器的旧数据，不会自动合并多台设备的记录。
+
+必须保留 `/data` 挂载卷，升级时沿用相同卷名及 Compose 项目名。不要执行 `docker compose down -v`。无登录、无多人账号、无离线队列；能访问实例的人都可以读写全部记录。
+
+Docker Hub 标签：`1.3`、`latest`；本次发布平台：`linux/amd64`。回归测试、同步边界测试、容器持久化验证通过，本地预览已由用户确认。
+
+### English
+
+Welcome to **Bean Journal v1.3**! This release adds SQLite-backed self-hosted synchronization and expanded equipment management.
+
+- One Docker image combines the frontend, Node.js service and SQLite. Computers, phones and tablets accessing the same instance share beans, photos, brews, recipes and equipment.
+- Persist data in the `/data` volume across container replacement. Language and theme remain device-local.
+- Separate equipment brand and model; add purchase price, custom currency and purchase date; allow changing equipment type.
+- Deactivate or reactivate equipment while preserving history. Inactive equipment is excluded from new selections.
+- Use consistent `YYYY-MM-DD` date fields while retaining native calendar selection.
+- Reject stale edits and equipment selections invalidated by another device's deactivation or type change.
+- Fix unintended browser-only saves when configuration fails to load, and stale pages after database restoration; protect restored data from old forms.
+
+### Upgrading
+
+**v1.2 stores data per browser; the v1.3 Docker version stores it on the server.** Export JSON from the old site's Settings before upgrading, then import into the shared instance. Import replaces all records. An empty server can offer to import legacy data from the same browser origin; records from different devices are not automatically merged.
+
+Retain the `/data` volume and the same Compose project/volume names. Do not run `docker compose down -v`. There is no login, multiple accounts or offline queue. Anyone who can reach the instance can read and modify all records.
+
+Docker Hub tags: `1.3`, `latest`; published platform: `linux/amd64`. Regression, synchronization-boundary and container-persistence tests passed. The local preview was confirmed by the user.
+
 ## v1.2 — 2026-10-31
 
 - 首页数据统计支持点击跳转，豆卡支持整卡点击查看。

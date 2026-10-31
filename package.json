@@ -1,15 +1,16 @@
 {
   "name": "bean-journal",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Bilingual local-first coffee journal with bean cards, brew calendar and origin map",
   "engines": {
-    "node": ">=22"
+    "node": ">=24.14.0"
   },
   "scripts": {
-    "start": "node scripts/serve.cjs",
-    "test": "node tests/check.cjs && node tests/dashboard.cjs && node tests/workbench.cjs && node tests/repairs.cjs && node tests/mobile-http.cjs",
-    "format": "prettier --write dist/*.html dist/*.css dist/*.js scripts/*.cjs tests/*.cjs"
+    "start": "node server/index.cjs",
+    "test": "node tests/check.cjs && node tests/dashboard.cjs && node tests/workbench.cjs && node tests/repairs.cjs && node tests/mobile-http.cjs && node tests/server.cjs && node tests/sync-boundaries.cjs",
+    "format": "prettier --write dist/*.html dist/*.css dist/*.js scripts/*.cjs tests/*.cjs",
+    "start:static": "node scripts/serve.cjs"
   },
   "devDependencies": {
     "fake-indexeddb": "^6.2.7",

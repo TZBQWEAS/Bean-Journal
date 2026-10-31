@@ -7,6 +7,13 @@ Object.assign(dictionary, {
   咖啡机: "Coffee machine",
   磨豆机: "Grinder",
   "品牌 / 型号": "Brand / Model",
+  品牌: "Brand",
+  型号: "Model",
+  买入价格: "Purchase price",
+  货币单位: "Currency",
+  买入日期: "Purchase date",
+  "例如：CNY、USD、AUD、元": "e.g. CNY, USD, AUD, yuan",
+  请填写有效的买入价格和日期: "Enter a valid purchase price and date.",
   设备备注: "Equipment notes",
   在用: "Active",
   已停用: "Inactive",
@@ -67,49 +74,7 @@ Object.assign(dictionary, {
     "Import replaces all beans, equipment, recipes and brews. Export a backup first. Continue?",
 });
 for (const [zh, en] of Object.entries(dictionary)) reverseDictionary[en] = zh;
-const parameterKeys = [
-  "method",
-  "grind",
-  "dose",
-  "yield",
-  "time",
-  "temperature",
-  "machineId",
-  "machine",
-  "grinderId",
-  "grinder",
-];
-function normalizeJournal(input) {
-  const next = {
-    ...input,
-    devices: input.devices || [],
-    recipes: input.recipes || [],
-    schemaVersion: 2,
-  };
-  next.brews = next.brews.map((b) => ({ ...b }));
-  if (!input.schemaVersion || input.schemaVersion < 2) {
-    for (const b of next.brews) {
-      if (!b.favorite) continue;
-      const id = "legacy-recipe-" + b.id;
-      if (!next.recipes.some((r) => r.id === id)) {
-        const bean = next.beans.find((x) => x.id === b.beanId);
-        const recipe = {
-          id,
-          name: (bean?.name || "Coffee") + " · " + (b.method || "手冲"),
-          beanId: b.beanId,
-          notes: b.notes || "",
-        };
-        for (const k of parameterKeys) recipe[k] = b[k] || "";
-        next.recipes.push(recipe);
-      }
-      if (!b.recipeId) {
-        b.recipeId = id;
-        b.recipeName = next.recipes.find((r) => r.id === id).name;
-      }
-    }
-  }
-  return next;
-}
+
 function parameterFields(item) {
   return (
     select(
@@ -214,12 +179,27 @@ function setupWorkbenchFields(type, item) {
         ["machine", "grinder"],
         item.type || "machine",
       ) +
-      field("品牌 / 型号", "model", item.model) +
+      field("品牌", "brand", item.brand, "text", 'maxlength="100"') +
+      field("型号", "model", item.model, "text", 'maxlength="200"') +
+      field(
+        "买入价格",
+        "purchasePrice",
+        item.purchasePrice,
+        "number",
+        'min="0" max="1000000000000" step="any"',
+      ) +
+      field(
+        "货币单位",
+        "currency",
+        item.currency,
+        "text",
+        'maxlength="20" placeholder="例如：CNY、USD、AUD、元"',
+      ) +
+      field("买入日期", "purchaseDate", item.purchaseDate, "date") +
       `<label class="wide">${tr("设备备注")}<textarea name="notes" rows="3">${esc(item.notes || "")}</textarea></label><p class="meta wide">${tr("停用后不会出现在新记录的设备列表，历史记录仍会保留。")}</p>`;
     const opts = $("[name=type]").options;
     opts[0].textContent = tr("咖啡机");
     opts[1].textContent = tr("磨豆机");
-    if (editing) $("[name=type]").disabled = true;
     return;
   }
   const isRecipe = type === "recipe";
@@ -290,6 +270,10 @@ function wireEquipmentFields() {
     };
 }
 function openWorkbenchForm(type, item = {}, reuse = false) {
+  if (serverMode && !serverReady) {
+    toast("正在连接服务器，请稍后重试");
+    return;
+  }
   disposeBrewTimer();
   captureFormBaseline(type, reuse ? null : item.id);
   kind = type;
@@ -339,7 +323,18 @@ async function saveWorkbench(obj) {
   }
   if (kind === "device") {
     const old = data.devices.find((d) => d.id === editing);
-    obj.type = old?.type || obj.type;
+    if (
+      (obj.purchasePrice !== undefined &&
+        obj.purchasePrice !== "" &&
+        (!Number.isFinite(Number(obj.purchasePrice)) ||
+          Number(obj.purchasePrice) < 0 ||
+          Number(obj.purchasePrice) > 1000000000000)) ||
+      (obj.purchaseDate && !validDateValue(obj.purchaseDate))
+    ) {
+      toast("请填写有效的买入价格和日期");
+      return;
+    }
+    obj.type = obj.type || old?.type;
     obj.archived = old?.archived || false;
   } else {
     if (
@@ -398,16 +393,20 @@ function renderEquipment() {
   $("#content").innerHTML =
     data.devices
       .filter((d) =>
-        [d.name, d.model, tr(d.type === "machine" ? "咖啡机" : "磨豆机")].some(
-          (v) =>
-            String(v || "")
-              .toLowerCase()
-              .includes(q),
+        [
+          d.name,
+          d.brand,
+          d.model,
+          tr(d.type === "machine" ? "咖啡机" : "磨豆机"),
+        ].some((v) =>
+          String(v || "")
+            .toLowerCase()
+            .includes(q),
         ),
       )
       .map(
         (d) =>
-          `<article class="equipment-card"><div class="recipe-kicker">${tr(d.type === "machine" ? "咖啡机" : "磨豆机")} · ${tr(d.archived ? "已停用" : "在用")}</div><h3 data-user>${esc(d.name)}</h3><p data-user>${esc(d.model || "")}</p><p class="meta" data-user>${esc(d.notes || "")}</p><button class="outline" data-device="${esc(d.id)}">${tr("编辑设备")}</button></article>`,
+          `<article class="equipment-card"><div class="recipe-kicker">${tr(d.type === "machine" ? "咖啡机" : "磨豆机")} · ${tr(d.archived ? "已停用" : "在用")}</div><h3 data-user>${esc(d.name)}</h3><p data-user>${esc([d.brand, d.model].filter(Boolean).join(" · "))}</p>${d.purchasePrice !== undefined && d.purchasePrice !== "" ? `<p class="meta">${tr("买入价格")} · <span data-user>${esc(d.purchasePrice)} ${esc(d.currency || "")}</span></p>` : ""}${d.purchaseDate ? `<p class="meta">${tr("买入日期")} · <span data-user>${esc(d.purchaseDate)}</span></p>` : ""}<p class="meta" data-user>${esc(d.notes || "")}</p><button class="outline" data-device="${esc(d.id)}">${tr("编辑设备")}</button></article>`,
       )
       .join("") ||
     `<div class="empty"><h3>${tr(q ? "没有找到匹配记录" : "暂无设备")}</h3><p>${tr("添加你的咖啡机和磨豆机，记录时直接选择。")}</p><button class="primary" data-new-device>${tr("添加设备")}</button></div>`;
@@ -540,155 +539,6 @@ function showRecipeInstructions(recipe) {
   block.textContent = recipe?.notes
     ? tr("配方操作步骤") + "\n" + recipe.notes
     : "";
-}
-function validateJournalBackup(obj) {
-  if (!obj || typeof obj !== "object" || Array.isArray(obj))
-    throw Error("invalid");
-  for (const list of ["beans", "brews"])
-    if (!Array.isArray(obj[list])) throw Error("invalid");
-  for (const list of ["devices", "recipes"])
-    if (obj[list] !== undefined && !Array.isArray(obj[list]))
-      throw Error("invalid");
-  if (
-    obj.schemaVersion !== undefined &&
-    (!Number.isInteger(obj.schemaVersion) ||
-      obj.schemaVersion < 1 ||
-      obj.schemaVersion > 2)
-  )
-    throw Error("invalid");
-  if (obj.generation !== undefined && typeof obj.generation !== "string")
-    throw Error("invalid");
-  const all = [
-    ...obj.beans,
-    ...obj.brews,
-    ...(obj.devices || []),
-    ...(obj.recipes || []),
-  ];
-  if (
-    all.some(
-      (x) =>
-        !x ||
-        Array.isArray(x) ||
-        typeof x.id !== "string" ||
-        !x.id ||
-        Object.values(x).some(
-          (v) => !["string", "number", "boolean"].includes(typeof v),
-        ),
-    ) ||
-    new Set(all.map((x) => x.id)).size !== all.length
-  )
-    throw Error("invalid");
-  const textFields = [
-    "name",
-    "origin",
-    "originCountryId",
-    "roast",
-    "roaster",
-    "process",
-    "flavors",
-    "notes",
-    "photo",
-    "roastDate",
-    "sampleKey",
-    "beanType",
-    "beanId",
-    "beanName",
-    "method",
-    "date",
-    "timeOfDay",
-    "grind",
-    "grinder",
-    "grinderId",
-    "machine",
-    "machineId",
-    "recipeId",
-    "recipeName",
-    "type",
-    "model",
-  ];
-  for (const record of all) {
-    for (const key of textFields)
-      if (record[key] !== undefined && typeof record[key] !== "string")
-        throw Error("invalid");
-    for (const key of ["archived", "favorite"])
-      if (record[key] !== undefined && typeof record[key] !== "boolean")
-        throw Error("invalid");
-  }
-  function numeric(value, min, max, optional = false) {
-    if (optional && (value === undefined || value === "")) return true;
-    if (
-      !["string", "number"].includes(typeof value) ||
-      String(value).trim() === ""
-    )
-      return false;
-    const n = Number(value);
-    return Number.isFinite(n) && n >= min && n <= max;
-  }
-  for (const b of obj.beans) {
-    if (
-      !b.name?.trim() ||
-      (b.flavors !== undefined && typeof b.flavors !== "string") ||
-      (b.photo && !safePhoto(b.photo)) ||
-      (b.roastDate && !validDateValue(b.roastDate)) ||
-      !numeric(b.weight, 0.1, 1000000, true)
-    )
-      throw Error("invalid");
-  }
-  for (const record of [...obj.brews, ...(obj.recipes || [])]) {
-    if (
-      !numeric(record.dose, 0.1, 5000) ||
-      !numeric(record.yield, 0.1, 50000) ||
-      !numeric(record.time, 1, 604800) ||
-      !Number.isInteger(Number(record.time)) ||
-      !numeric(record.temperature, 0, 100, true) ||
-      !numeric(record.rating, 1, 5, true) ||
-      (record.rating !== undefined &&
-        record.rating !== "" &&
-        !Number.isInteger(Number(record.rating)))
-    )
-      throw Error("invalid");
-    if (
-      record.method !== undefined &&
-      ![
-        "手冲",
-        "意式浓缩",
-        "爱乐压",
-        "法压壶",
-        "摩卡壶",
-        "冷萃",
-        "其他",
-        "",
-      ].includes(record.method)
-    )
-      throw Error("invalid");
-  }
-  for (const b of obj.brews) {
-    if (
-      !validDateValue(b.date) ||
-      typeof b.beanId !== "string" ||
-      !b.beanId ||
-      (!obj.beans.some((bean) => bean.id === b.beanId) &&
-        !b.beanName?.trim()) ||
-      (b.timeOfDay && !/^([01]\d|2[0-3]):[0-5]\d$/.test(b.timeOfDay))
-    )
-      throw Error("invalid");
-  }
-  for (const d of obj.devices || [])
-    if (!d.name?.trim() || !["machine", "grinder"].includes(d.type))
-      throw Error("invalid");
-  for (const r of obj.recipes || [])
-    if (!r.name?.trim()) throw Error("invalid");
-  const result = normalizeJournal(
-    structuredClone({
-      beans: obj.beans,
-      brews: obj.brews,
-      devices: obj.devices || [],
-      recipes: obj.recipes || [],
-      schemaVersion: obj.schemaVersion || 1,
-      ...(obj.generation ? { generation: obj.generation } : {}),
-    }),
-  );
-  return result;
 }
 
 let activeBrewTimer = null;

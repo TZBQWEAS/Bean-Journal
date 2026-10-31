@@ -7,22 +7,15 @@
 </p>
 
 <p align="center">把喜欢的风味，留在每一页。收藏豆卡，记录每次冲煮，保存心选配方。</p>
-<p align="center"><strong>v1.2 · 中文 / English · 深浅主题 · 浏览器本地存储</strong></p>
+<p align="center"><strong>v1.3 · SQLite 多端同步 · 中文 / English · 深浅主题</strong></p>
 
-豆间是一个属于咖啡爱好者的个人手记网站，采用原生 HTML、CSS 和 JavaScript。用豆卡收藏风味，用冲煮记录留住每一杯，用配方保存可反复使用的方案，无需后端和构建步骤。
+豆间是一个属于咖啡爱好者的个人手记网站，采用原生 HTML、CSS 和 JavaScript。用豆卡收藏风味，用冲煮记录留住每一杯，用配方保存可反复使用的方案，当前源码可通过一体化 Node.js / SQLite 服务自托管，也保留纯静态部署方式。
 
-## v1.2 更新
+## v1.3 更新
 
-- 首页数据统计支持点击跳转，豆卡支持整卡点击查看。
-- 国家搜索直接展示可点击的匹配结果，支持中英文搜索。
-- 修复切换语言后豆卡国家名称未更新的问题，保留产区与庄园原文。
-- 新增中深烘选项、筛选及对应豆卡配色。
-- 冲煮记录新增萃取计时器，位于时间输入框右侧，停止后自动填入秒数。
-- Docker 标签：1.2、latest；平台：linux/amd64。
+新增 SQLite 自托管多端同步；设备品牌与型号分开，支持买入价格、自定义货币单位、买入日期和修改类型；日期格式统一，并补全多端冲突保护。详见 [中英文发布说明](docs/releases/v1.3.md) 和 [更新记录](CHANGELOG.md)。
 
-数据仍保存在当前浏览器，v1.2 不包含账户或多端同步。更新前建议在设置中导出备份，并保持原访问地址和端口。完整更新记录见 [CHANGELOG.md](CHANGELOG.md)。
-
-发布说明：[v1.2 — 中文 / English](docs/releases/v1.2.md)。历史更新见 [CHANGELOG.md](CHANGELOG.md)。
+**从 v1.2 升级：先在旧浏览器设置中导出 JSON 备份。** v1.3 启动后导入选定备份，导入会替换共享实例的全部记录；其他设备访问同一实例即可。旧浏览器数据会保留，不会自动合并或持续同步。
 
 ## 真实截图
 
@@ -72,43 +65,29 @@
 - **设置与备份：** 中英文、深浅主题；JSON 导入导出，包含照片。
 - **历史记录保留：** 删除豆卡不会删除关联冲煮记录；旧版爱心收藏自动迁移为独立配方。
 
-## 本地运行
-
-安装 **Node.js 22 或更高版本**，在项目目录运行：
-
-```sh
-npm start
-```
-
-打开 `http://127.0.0.1:8080`。
-
-本地服务仅使用 Node.js 内置模块，单纯运行网站无需安装开发依赖。请通过 HTTP 服务打开，不要直接双击 HTML。
-
 ## Docker 部署
 
-镜像已公开发布到 [Docker Hub · tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal)。无需下载源码或安装 Node.js，安装 Docker 后即可运行。
-
-### 方式一：直接运行
+公开镜像：[tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal)。发布时 `1.3` 和 `latest` 均指向 v1.3；固定版本请使用 `1.3`。本次发布架构：`linux/amd64`。
 
 ```sh
-docker pull tzbqweas/bean-journal:latest
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:latest
+docker pull tzbqweas/bean-journal:1.3
+docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3
 ```
 
-在浏览器地址栏输入 `http://localhost:8080`。
+电脑打开 `http://localhost:8080`，手机或 iPad 打开 `http://服务器局域网IP:8080`。所有设备必须访问同一实例，主机需允许对应端口。**没有登录：能够访问实例的人都可以查看和修改全部记录。**
 
-停止容器：`docker stop bean-journal`；再次启动：`docker start bean-journal`。
+### Docker Compose
 
-### 方式二：Docker Compose
-
-在一个空目录中创建 `compose.yaml`，粘贴以下内容（使用 Docker Hub 镜像，无需本地构建）：
+直接使用仓库的 `compose.yaml`，或创建以下文件：
 
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:latest
+    image: tzbqweas/bean-journal:1.3
     ports:
-      - "127.0.0.1:8080:8080"
+      - "8080:8080"
+    volumes:
+      - bean-journal-data:/data
     restart: unless-stopped
     read_only: true
     tmpfs:
@@ -117,113 +96,59 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+volumes:
+  bean-journal-data:
+
 ```
-
-在该目录启动：
-
-```sh
-docker compose up -d
-```
-
-停止并移除容器：`docker compose down`。
-
-更新镜像并重新创建服务：
 
 ```sh
 docker compose pull
 docker compose up -d
 ```
 
-### 镜像信息与数据
+升级时沿用相同 Compose 项目名和数据卷。数据及照片保存在 `/data/journal.sqlite`；**不要执行 `docker compose down -v`，它会删除数据卷。** 日常备份使用设置中的 JSON 导出，包含照片。文件级备份先停止服务，再复制完整数据目录。
 
-| 项目 | 说明 |
-| --- | --- |
-| 镜像名称 | `tzbqweas/bean-journal` |
-| 标签 | `1.2`、`latest` |
-| 当前发布架构 | `linux/amd64` |
-| 容器端口 | `8080` |
-| 健康检查 | `/healthz` |
-| 运行方式 | Nginx、非 root 用户 |
-| 数据卷 | 无需挂载 |
-
-
-默认端口仅绑定本机。服务器部署请通过 HTTPS 反向代理访问此端口；局域网 HTTP 保存已提供兼容处理，在 Web Locks 不可用时使用 IndexedDB 协调写入。更换本机端口时，只修改映射左侧，例如 `127.0.0.1:8088:8080`。
-
-**Docker 不会把数据转为服务器存储。** 豆卡、照片和冲煮记录仍保存在浏览器中，没有云同步。更换域名、协议或端口前，请从设置导出备份，再在新地址导入。
-
-### 从源码构建
-
-如果需要修改网站，可下载本仓库，在项目目录执行：
+### 从源码构建或归档镜像
 
 ```sh
-docker compose up -d --build
+docker build -t bean-journal:1.3 .
+docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3
+docker load -i bean-journal-1.3.tar
 ```
 
-仓库自带的 `compose.yaml` 用于本地构建；与上方直接使用 Docker Hub 镜像的配置不同。也可单独构建：
+镜像包含网页、Node.js 与 SQLite，不包含开发依赖或个人数据。导入镜像后用上面的启动命令运行并挂载数据卷。其他受支持架构可在对应主机源码构建；本次发布镜像为 amd64。
+
+## 本地运行
+
+安装 Node.js 24.14 或更高的 24.x 版本，在项目目录运行：
 
 ```sh
-docker build -t bean-journal:1.2 .
+npm start
 ```
 
-镜像只包含静态网站和服务配置，不包含开发依赖、README 截图或收款码。
+打开 `http://localhost:8080`。运行只使用 Node.js 内置模块，不必安装开发依赖。数据库默认在 `data/`；可通过 `DATA_DIR`、`PORT`、`HOST` 调整目录、端口和监听地址。`npm run start:static` 保留纯静态浏览器存储模式，此模式不提供多端同步。
 
-### 离线部署
+## 数据与同步
 
-```sh
-docker pull tzbqweas/bean-journal:latest
-docker save -o bean-journal-latest.tar tzbqweas/bean-journal:latest
-```
-
-把文件复制到目标机器后导入，再使用“方式一”中的 `docker run` 命令启动：
-
-```sh
-docker load -i bean-journal-latest.tar
-```
-
-当前发布镜像适用于 `linux/amd64`；其他架构可在对应机器上从源码构建。
+页面约每 5 秒及重新获得焦点时检查更新；编辑中暂停自动刷新，保存时校验冲突。历史设备关联保留，语言与主题各设备独立设置。不提供多人账户或离线队列。详见 [自托管同步与备份说明](docs/self-hosted-sync.md)。
 
 ## 开发检查
 
 ```sh
 npm ci
 npm test
-npm run format
 ```
 
-测试使用 jsdom，覆盖设置、翻译、照片、旧数据兼容、地图、日历、设备、配方、备份校验、历史记录保留和多标签页冲突。测试不代替真实浏览器的视觉和文件上传检查。
-
-## 目录
+覆盖原有功能、旧数据、设备管理、备份校验、HTTP/SQLite 持久化、并发保存、过期编辑、配置失败和服务恢复。自动化测试不代替所有真机验证。
 
 ```text
-dist/                  可直接部署的静态源码，无构建步骤
-  index.html           页面结构
-  style.css            基础样式
-  enhancements.css     主题、地图和主界面样式
-  app.js               豆卡表单、持久化与备份
-  preferences.js       语言、主题与照片处理
-  samples.js           示例豆卡本地化
-  map-data.js          Natural Earth 地图数据
-  origin-map.js        来源识别与地图交互
-  dashboard.js         日历、统计和最近冲煮
-  workbench.js         设备、配方、冲煮记录与迁移
-  licenses/            第三方许可
-docs/images/           项目图标与原始截图
-scripts/serve.cjs      本地 HTTP 服务器
-tests/                 功能回归测试
-README.md              简体中文说明，默认展示
-README.en.md           英文说明
-README.zh-CN.md         简体中文兼容副本
+dist/          前端与共享数据校验
+server/        HTTP API 与 SQLite 存储
+scripts/       可选静态服务器
+tests/         回归测试
+docs/          截图、部署和发布说明
+compose.yaml   Docker Hub 镜像持久化部署
 ```
-
-## 数据与部署
-
-所有记录和照片保存在**当前浏览器的 localStorage**，**没有云同步**。迁移浏览器或域名前，请先从设置导出备份，再在目标环境导入。浏览器清理和存储配额会影响数据保存，建议定期备份。
-
-使用现代浏览器，优先通过 **Web Locks** 保存，在局域网 HTTP 下使用 **IndexedDB** 兼容方案；正式部署使用 **HTTPS**，本地开发使用 localhost / 127.0.0.1。多标签页独立新增会合并保存；同一记录的冲突会阻止覆盖，并提示重新打开。
-
-将 `dist/` 作为静态网站目录部署即可，无需 API 密钥或服务器环境变量。本仓库不包含 Sites 托管身份、发布凭据和个人备份文件。
-
-地图使用近似国家 / 地区标记，不是庄园定位；无法识别的来源会列为待补充。照片在本地压缩，仅在详情中显示。字体从 Google Fonts 加载，网络不可用时回退到本地字体；地图不依赖在线地图 API。
 
 ## 支持项目
 
@@ -245,4 +170,4 @@ README.zh-CN.md         简体中文兼容副本
 
 ## 版本与致谢
 
-当前版本：**v1.2** 更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+当前版本：**v1.3** 更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

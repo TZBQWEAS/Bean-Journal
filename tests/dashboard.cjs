@@ -10,6 +10,7 @@ const dom = new JSDOM(fs.readFileSync(path.join(root, "index.html"), "utf8"), {
   }),
   w = dom.window,
   d = w.document;
+w.JOURNAL_SERVER = false;
 w.structuredClone = structuredClone;
 w.navigator.locks = { request: (_name, fn) => Promise.resolve(fn()) };
 w.confirm = () => true;
@@ -56,6 +57,7 @@ w.localStorage.setItem(
   }),
 );
 for (const file of [
+  "journal-model.js",
   "preferences.js",
   "samples.js",
   "map-data.js",

@@ -7,22 +7,15 @@
 </p>
 
 <p align="center">A little ritual, every day. Keep your beans, brews and favorite recipes in one place.</p>
-<p align="center"><strong>v1.2 · English / 简体中文 · Light & dark themes · Browser-local storage</strong></p>
+<p align="center"><strong>v1.3 · SQLite synchronization · English / 简体中文 · Light & dark themes</strong></p>
 
-Bean Journal is a personal coffee notebook built with plain HTML, CSS and JavaScript. Collect bean cards, record each cup and keep reusable recipes—without a backend or build step.
+Bean Journal is a personal coffee notebook built with plain HTML, CSS and JavaScript. Collect bean cards, record each cup and keep reusable recipes. The current source supports an integrated Node.js / SQLite deployment as well as static hosting.
 
-## What's new in v1.2
+## v1.3
 
-- Click dashboard totals to navigate and click bean cards to open details.
-- Search countries in Chinese or English and choose directly from matching results.
-- Country names update immediately when switching languages; region and farm text stays unchanged.
-- Add medium-dark roast selection, filtering and card colors.
-- Add a brew timer beside the extraction-time input; stopping fills in elapsed seconds.
-- Docker tags: 1.2, latest; platform: linux/amd64.
+Self-hosted SQLite synchronization, expanded equipment information and consistent date inputs. Read the [bilingual release notes](docs/releases/v1.3.md) and [changelog](CHANGELOG.md).
 
-Data remains in each browser. v1.2 does not add accounts or cross-device sync. Export a backup in Settings before upgrading and keep the same access address and port. See [CHANGELOG.md](CHANGELOG.md) for the full release notes.
-
-Release notes: [v1.2 — 中文 / English](docs/releases/v1.2.md). Earlier changes: [CHANGELOG.md](CHANGELOG.md).
+**Upgrade from v1.2:** export a JSON backup from each old browser before upgrading. Import the chosen backup into v1.3; import replaces the shared journal. Other devices then access the same instance. Legacy browser data is retained, not automatically merged or continuously synchronized.
 
 ## Screenshots
 
@@ -72,41 +65,29 @@ Real phone screenshots provided by the project owner. Both images are 670 × 128
 - **Preferences & backup:** English and Simplified Chinese, light and dark themes, JSON import and export including photos.
 - **History preservation:** deleting a bean card keeps its associated brew records. Legacy favorites migrate to recipes.
 
-## Quick start
-
-Install **Node.js 22 or later**, then run from the project directory:
-
-```sh
-npm start
-```
-
-Open `http://127.0.0.1:8080`.
-
-The local server uses only built-in Node.js modules, so dependencies are not required just to run the app. Use the HTTP server instead of opening the HTML file directly.
-
 ## Docker deployment
 
-Use the public [Docker Hub image](https://hub.docker.com/r/tzbqweas/bean-journal) without downloading source code or installing Node.js.
-
-### Run directly
+Public image: [tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal). Tags `1.3` and `latest` point to v1.3 at release; `1.3` pins this version. Platform: `linux/amd64`.
 
 ```sh
-docker pull tzbqweas/bean-journal:latest
-docker run -d --name bean-journal -p 127.0.0.1:8080:8080 --restart unless-stopped tzbqweas/bean-journal:latest
+docker pull tzbqweas/bean-journal:1.3
+docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3
 ```
 
-Enter `http://localhost:8080` in your browser. Stop with `docker stop bean-journal`; restart with `docker start bean-journal`.
+Open `http://localhost:8080` locally or `http://SERVER_LAN_IP:8080` from other devices. All devices must reach the same instance. Allow the port on your host. There is **no login**: anyone who can reach it can read and modify the shared journal.
 
 ### Docker Compose
 
-Create `compose.yaml` in an empty directory:
+Use the repository's `compose.yaml`, or create one with:
 
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:latest
+    image: tzbqweas/bean-journal:1.3
     ports:
-      - "127.0.0.1:8080:8080"
+      - "8080:8080"
+    volumes:
+      - bean-journal-data:/data
     restart: unless-stopped
     read_only: true
     tmpfs:
@@ -115,107 +96,59 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+volumes:
+  bean-journal-data:
+
 ```
-
-Start with `docker compose up -d`. Stop and remove the container with `docker compose down`.
-
-To pull updates and recreate the service:
 
 ```sh
 docker compose pull
 docker compose up -d
 ```
 
-### Image and storage
+Keep the same Compose project name and named volume on upgrades. Data and photos live in `/data/journal.sqlite`; **do not run `docker compose down -v`**, which deletes the volume. Settings JSON export includes photos. Stop the service before copying the complete data directory for file-level backups.
 
-| Item | Value |
-| --- | --- |
-| Image | `tzbqweas/bean-journal` |
-| Tags | `1.2`, `latest` |
-| Published architecture | `linux/amd64` |
-| Container port | `8080` |
-| Health check | `/healthz` |
-| Runtime | Nginx, non-root user |
-| Data volume | Not required |
-
-
-The port is bound to localhost by default. Use an HTTPS reverse proxy for remote access; LAN HTTP saving is supported through a compatibility fallback when Web Locks is unavailable. Change only the left side of the mapping for another host port, for example `127.0.0.1:8088:8080`.
-
-**Data remains in browser storage, not in the container.** There is no cloud sync. Export a backup from Settings before changing the domain, protocol or port, then import it at the new address.
-
-### Build from source
-
-To customize the website, download the repository and run in its directory:
+### Build or archive the image
 
 ```sh
-docker compose up -d --build
+docker build -t bean-journal:1.3 .
+docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3
+docker load -i bean-journal-1.3.tar
 ```
 
-The repository's bundled `compose.yaml` builds locally; it differs from the image-only example above. You can also build separately:
+The image contains the app, Node.js and SQLite, without developer dependencies or private data. To run an imported image, use the command above with a persistent volume. Source builds are possible on other supported host architectures; this published image is amd64.
+
+## Run from source
+
+Use Node.js 24.14 or later in the 24.x line:
 
 ```sh
-docker build -t bean-journal:1.2 .
+npm start
 ```
 
-The image includes only static site files and server configuration, without development dependencies, README screenshots or payment QR codes.
+Open `http://localhost:8080`. Built-in modules provide the runtime; no npm dependencies are required just to run it. The database defaults to `data/`; `DATA_DIR`, `PORT` and `HOST` can override defaults. `npm run start:static` preserves browser-local static mode, without multi-device sync.
 
-### Offline deployment
+## Storage and synchronization
 
-```sh
-docker pull tzbqweas/bean-journal:latest
-docker save -o bean-journal-latest.tar tzbqweas/bean-journal:latest
-```
-
-Copy the archive to the target machine, load it, then use the `docker run` command above:
-
-```sh
-docker load -i bean-journal-latest.tar
-```
-
-The published image targets `linux/amd64`; build from source on the target machine for other architectures.
+Pages check for changes about every 5 seconds and on focus. Editing pauses automatic refresh; saves check for conflicts. Historical equipment links remain intact. Language and theme are local preferences. There are no multiple accounts or offline queues. See [storage details](docs/self-hosted-sync.md).
 
 ## Development
 
 ```sh
 npm ci
 npm test
-npm run format
 ```
 
-The jsdom regression tests cover settings, translations, photos, legacy data, maps, calendars, equipment, recipes, backup validation, preserved history and concurrent-tab conflicts. They do not replace real-browser visual or file-upload checks.
-
-## Project layout
+Tests cover UI behavior, legacy data, equipment, backup validation, HTTP/SQLite persistence, concurrent saves, stale edits, configuration failure and server restoration. Automated tests do not replace all real-device checks.
 
 ```text
-dist/                  Deployable static source; no build step
-  index.html           Page structure
-  style.css            Base styles
-  enhancements.css     Themes, maps and dashboard styles
-  app.js               Bean forms, persistence and backups
-  preferences.js       Language, theme and photo handling
-  samples.js           Localized sample bean cards
-  map-data.js          Natural Earth map data
-  origin-map.js        Origin matching and map interaction
-  dashboard.js         Calendar, summaries and recent brews
-  workbench.js         Equipment, recipes, brew records and migration
-  licenses/            Bundled third-party licenses
-docs/images/           Project logo and original screenshots
-scripts/serve.cjs      Local HTTP server
-tests/                 Regression tests
-README.md              Simplified Chinese documentation (default)
-README.en.md           English documentation
-README.zh-CN.md         Simplified Chinese compatibility copy
+dist/          Frontend and shared data validation
+server/        HTTP API and SQLite storage
+scripts/       Optional static server
+tests/         Regression tests
+docs/          Screenshots, deployment and release notes
+compose.yaml   Persistent Docker Hub deployment
 ```
-
-## Storage & deployment
-
-All records and photos are stored in **this browser's localStorage**. **There is no cloud sync.** To move to another browser or domain, export a backup from Settings and import it at the destination. Browser cleanup and storage limits can affect your data; keep regular backups.
-
-Use a modern browser. Saving uses **Web Locks** when available and an **IndexedDB** fallback on LAN HTTP. Deploy over **HTTPS**; use localhost or 127.0.0.1 for development. Independent additions from multiple tabs are merged, while conflicting edits to the same record are rejected with a prompt to reopen it.
-
-Deploy `dist/` as the static site directory. No API keys or server environment variables are needed. This repository excludes Sites hosting identity, deployment credentials and personal backup files.
-
-Map markers indicate approximate countries or regions, not individual farms. Unrecognized origins are listed for clarification. Photos are compressed locally and displayed only in bean details. Google Fonts falls back to local fonts when unavailable; the map does not need an online map API.
 
 ## Support the project
 
@@ -237,5 +170,5 @@ Donations are entirely optional and do not affect access to any features.
 
 ## Version & credits
 
-Current version: **v1.2**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
+Current version: **v1.3**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
 

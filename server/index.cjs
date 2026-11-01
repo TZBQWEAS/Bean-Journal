@@ -15,7 +15,7 @@ const types = {
 };
 function createJournalServer({
   dataDir = process.env.DATA_DIR || path.resolve(__dirname, "../data"),
-  maxBodyBytes = 64 * 1024 * 1024,
+  maxBodyBytes = 65 * 1024 * 1024,
 } = {}) {
   const store = openStore(dataDir);
   const instanceId = randomUUID();

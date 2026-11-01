@@ -1,6 +1,6 @@
 FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85
 LABEL org.opencontainers.image.title="Bean Journal" \
-      org.opencontainers.image.version="1.3" \
+      org.opencontainers.image.version="1.3.1" \
       org.opencontainers.image.source="https://github.com/TZBQWEAS/Bean-Journal"
 WORKDIR /app
 COPY dist/ ./dist/

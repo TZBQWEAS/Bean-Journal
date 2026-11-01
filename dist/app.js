@@ -6,6 +6,13 @@ let data = { beans: [], brews: [], devices: [], recipes: [], schemaVersion: 2 },
   editing = null,
   kind = "bean";
 function toast(t) {
+  const target =
+    document.querySelector("dialog[open].legacy-dialog") ||
+    document.querySelector("dialog[open]") ||
+    document.body;
+  target.append($("#toast"));
+  $("#toast").removeAttribute("aria-hidden");
+  $("#toast").removeAttribute("inert");
   $("#toast").textContent = tr(t);
   $("#toast").style.display = "block";
   setTimeout(() => ($("#toast").style.display = "none"), 2800);
@@ -17,6 +24,7 @@ let serverInstance = null,
   requestSequence = 0,
   acceptedSequence = 0;
 let formServerInstance = null;
+let formSession = 0;
 let serverReady = !serverMode,
   serverRevision = -1,
   serverLoading = false;
@@ -24,16 +32,45 @@ let serverWriteQueue = Promise.resolve(),
   serverWrites = 0,
   serverRefreshing = false;
 let legacyBrowserJournal = null;
+async function requestJournal(options = {}, timeoutMs = 30000) {
+  const controller =
+    typeof AbortController === "function" ? new AbortController() : null;
+  let timer;
+  try {
+    return await Promise.race([
+      (async () => {
+        const response = await fetch("/api/journal", {
+          ...options,
+          ...(controller ? { signal: controller.signal } : {}),
+        });
+        const body =
+          response.ok && response.status !== 304 ? await response.json() : null;
+        return { response, body };
+      })(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          reject(Error("timeout"));
+          if (controller) controller.abort();
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function readServerJournal(conditional = false) {
   const requestId = ++requestSequence;
   const headers = { Accept: "application/json" };
   if (conditional && serverRevision >= 0)
     headers["If-None-Match"] =
       '"' + serverInstance + ":" + serverRevision + '"';
-  const response = await fetch("/api/journal", { headers, cache: "no-store" });
+  const { response, body } = await requestJournal({
+    headers,
+    cache: "no-store",
+  });
   if (response.status === 304) return null;
   if (!response.ok) throw Error("server");
-  const snapshot = await response.json();
+  const snapshot = body;
   if (
     !Number.isSafeInteger(snapshot.revision) ||
     typeof snapshot.instanceId !== "string" ||
@@ -124,9 +161,9 @@ function persistToServer(next, { replace = false } = {}) {
     toast("正在连接服务器，请稍后重试");
     return Promise.resolve(false);
   }
-  const base = structuredClone(data),
-    wanted = structuredClone(next);
-  const baseline = formBaseline && structuredClone(formBaseline);
+  const base = cloneJournal(data),
+    wanted = cloneJournal(next);
+  const baseline = formBaseline && cloneJournal(formBaseline);
   const replacementRevision = serverRevision;
   const expectedInstance = document.querySelector("#modal")?.open
     ? formServerInstance
@@ -147,7 +184,7 @@ function persistToServer(next, { replace = false } = {}) {
         } else merged = mergeJournal(base, wanted, current.journal, baseline);
         merged = validateJournalBackup(merged);
         const saveRequestId = ++requestSequence;
-        const response = await fetch("/api/journal", {
+        const { response, body } = await requestJournal({
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -161,7 +198,7 @@ function persistToServer(next, { replace = false } = {}) {
         });
         if (response.status === 409) continue;
         if (!response.ok) throw Error("server");
-        const saved = await response.json();
+        const saved = body;
         saved.journal = validateJournalBackup(saved.journal);
         if (saved.instanceId !== current.instanceId) throw Error("conflict");
         saved.requestId = saveRequestId;
@@ -188,7 +225,7 @@ try {
   setTimeout(() => toast("无法读取已有记录，请检查浏览器存储或导入备份"), 100);
 }
 if (serverMode) {
-  legacyBrowserJournal = structuredClone(data);
+  legacyBrowserJournal = cloneJournal(data);
   data = { beans: [], brews: [], devices: [], recipes: [], schemaVersion: 2 };
 }
 const esc = (s) =>
@@ -202,6 +239,7 @@ const esc = (s) =>
 const date = () => new Date().toLocaleDateString("sv-SE");
 let formBaseline = null;
 function captureFormBaseline(type, id) {
+  formSession++;
   formServerInstance = serverInstance;
   const list =
     type === "bean"
@@ -212,7 +250,7 @@ function captureFormBaseline(type, id) {
           ? "recipes"
           : "devices";
   formBaseline = id
-    ? { list, id, record: structuredClone(data[list].find((x) => x.id === id)) }
+    ? { list, id, record: cloneJournal(data[list].find((x) => x.id === id)) }
     : null;
 }
 
@@ -284,6 +322,10 @@ function withJournalLock(write, reconnect = true) {
   );
 }
 function saveError(error) {
+  if (error?.message === "timeout") {
+    toast("请求超时，保存结果尚未确认。请先刷新记录再重试；表单内容已保留。");
+    return;
+  }
   if (serverMode && error?.message !== "conflict") {
     toast("保存失败：无法写入服务器，请检查服务和磁盘空间");
     return;
@@ -298,9 +340,9 @@ function persist(next, { replace = false } = {}) {
   if (serverMode) return persistToServer(next, { replace });
   try {
     const initialRaw = localStorage.getItem(key),
-      base = structuredClone(data),
-      wanted = structuredClone(next),
-      baseline = formBaseline && structuredClone(formBaseline);
+      base = cloneJournal(data),
+      wanted = cloneJournal(next),
+      baseline = formBaseline && cloneJournal(formBaseline);
     return withJournalLock(() => {
       try {
         const raw = localStorage.getItem(key);
@@ -625,6 +667,7 @@ let formSaving = false;
 $("#form").onsubmit = async (e) => {
   e.preventDefault();
   if (formSaving) return;
+  const session = formSession;
   formSaving = true;
   const saveButton = e.target.querySelector('[type="submit"]');
   saveButton.disabled = true;
@@ -662,12 +705,12 @@ $("#form").onsubmit = async (e) => {
         : false;
       if (obj.rating === "未评分") obj.rating = "";
     }
-    const next = structuredClone(data);
+    const next = cloneJournal(data);
     if (editing)
       next[list] = next[list].map((x) => (x.id === editing ? obj : x));
     else next[list].push(obj);
     if (await persist(next)) {
-      $("#modal").close();
+      if (session === formSession) $("#modal").close();
       toast("已保存，下一杯也有迹可循");
     }
   } catch (error) {
@@ -678,6 +721,7 @@ $("#form").onsubmit = async (e) => {
   }
 };
 $("#delete").onclick = async () => {
+  const session = formSession;
   if (kind === "device" || kind === "recipe") {
     await deleteWorkbench();
     return;
@@ -692,7 +736,7 @@ $("#delete").onclick = async () => {
     )
   )
     return;
-  const next = structuredClone(data);
+  const next = cloneJournal(data);
   if (kind === "bean") {
     next.beans = next.beans.filter((x) => x.id !== editing);
     next.brews = next.brews.map((x) =>
@@ -707,7 +751,7 @@ $("#delete").onclick = async () => {
         : x,
     );
   } else next.brews = next.brews.filter((x) => x.id !== editing);
-  if (await persist(next)) $("#modal").close();
+  if ((await persist(next)) && session === formSession) $("#modal").close();
 };
 $("#close").onclick = () => $("#modal").close();
 $("#newBrew").onclick = () => openForm("brew");
@@ -764,13 +808,14 @@ document.addEventListener("click", (e) => {
       true,
     );
   if (d.fav) {
-    const next = structuredClone(data);
+    const next = cloneJournal(data);
     const x = next.brews.find((x) => x.id === d.fav);
     x.favorite = !x.favorite;
     persist(next);
   }
   if ("emptyadd" in d) openForm("bean");
   if (b.id === "demo") {
+    formBaseline = null;
     persist({
       ...data,
       beans: [
@@ -800,7 +845,6 @@ document.addEventListener("click", (e) => {
           notes: "演示数据",
         },
       ],
-      brews: [],
     });
   }
 });
@@ -811,7 +855,7 @@ $("#export").onclick = async () => {
       return;
     }
   } else refreshStoredJournal();
-  const blob = new Blob([JSON.stringify({ version: 2, ...data }, null, 2)], {
+  const blob = new Blob([JSON.stringify({ version: 2, ...data })], {
       type: "application/json",
     }),
     url = URL.createObjectURL(blob),
@@ -827,7 +871,7 @@ $("#importFile").onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    if (file.size > (serverMode ? 64000000 : 25000000)) throw Error();
+    if (file.size > (serverMode ? 128 * 1024 * 1024 : 25000000)) throw Error();
     const obj = JSON.parse(await file.text());
     const imported = validateJournalBackup(obj);
     if (

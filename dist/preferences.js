@@ -1,4 +1,6 @@
 const dictionary = {
+  "请求超时，保存结果尚未确认。请先刷新记录再重试；表单内容已保留。":
+    "Request timed out; the save result is unknown. Refresh records before retrying. Your draft has been kept.",
   导航菜单: "Navigation menu",
   "当前浏览器不支持安全保存，请使用新版浏览器":
     "Use an up-to-date browser to save safely.",
@@ -326,8 +328,35 @@ function updatePhotoPreview() {
   $("#removePhoto").hidden = !draftPhoto;
   localize();
 }
+async function decodePhoto(file) {
+  if (typeof createImageBitmap === "function") {
+    try {
+      return await createImageBitmap(file);
+    } catch {
+      /* Try the image decoder. */
+    }
+  }
+  return new Promise((resolve, reject) => {
+    const image = new Image(),
+      url = URL.createObjectURL(file);
+    const cleanup = () => {
+      image.onload = null;
+      image.onerror = null;
+      URL.revokeObjectURL(url);
+    };
+    image.onload = () => {
+      cleanup();
+      resolve(image);
+    };
+    image.onerror = () => {
+      cleanup();
+      reject(Error("Image decode failed"));
+    };
+    image.src = url;
+  });
+}
 async function resizePhoto(file) {
-  const image = await createImageBitmap(file);
+  const image = await decodePhoto(file);
   try {
     if (!image.width || !image.height) throw Error("Empty image");
     const scale = Math.min(1, 1200 / Math.max(image.width, image.height)),
@@ -343,7 +372,7 @@ async function resizePhoto(file) {
     if (!safePhoto(result)) throw Error("Photo too large");
     return result;
   } finally {
-    image.close();
+    if (typeof image.close === "function") image.close();
   }
 }
 

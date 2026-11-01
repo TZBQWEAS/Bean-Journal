@@ -41,6 +41,7 @@ async function client(legacy, confirm = false) {
   const w = dom.window;
   w.JOURNAL_SERVER = true;
   w.structuredClone = structuredClone;
+  w.AbortController = AbortController;
   w.confirm = () => confirm;
   w.fetch = (input, init) => fetch(new URL(input, url), init);
   w.HTMLDialogElement.prototype.showModal = function () {

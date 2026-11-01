@@ -1,6 +1,6 @@
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.3
+    image: tzbqweas/bean-journal:1.3.1
     ports:
       - "8080:8080"
     volumes:

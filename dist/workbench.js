@@ -315,6 +315,8 @@ function openWorkbenchForm(type, item = {}, reuse = false) {
   $("#modal").showModal();
 }
 async function saveWorkbench(obj) {
+  const session = formSession,
+    savedKind = kind;
   const list =
     kind === "device" ? "devices" : kind === "recipe" ? "recipes" : "brews";
   if ((kind === "device" || kind === "recipe") && !obj.name) {
@@ -356,22 +358,23 @@ async function saveWorkbench(obj) {
       if (obj[key + "Id"] === "legacy") obj[key + "Id"] = "";
   }
   obj.id = editing || journalId();
-  const next = structuredClone(data);
+  const next = cloneJournal(data);
   if (editing) next[list] = next[list].map((x) => (x.id === editing ? obj : x));
   else next[list].push(obj);
   if (await persist(next)) {
-    $("#modal").close();
+    if (session === formSession) $("#modal").close();
     toast(
-      kind === "device"
+      savedKind === "device"
         ? "已保存设备"
-        : kind === "recipe"
+        : savedKind === "recipe"
           ? "已保存配方"
           : "已保存本次冲煮",
     );
   }
 }
 async function deleteWorkbench() {
-  const next = structuredClone(data);
+  const session = formSession;
+  const next = cloneJournal(data);
   if (kind === "device") {
     const d = next.devices.find((d) => d.id === editing);
     d.archived = !d.archived;
@@ -379,7 +382,7 @@ async function deleteWorkbench() {
     if (!confirm(tr("删除配方？已有冲煮记录和实际参数会保留。"))) return;
     next.recipes = next.recipes.filter((r) => r.id !== editing);
   }
-  if (await persist(next)) $("#modal").close();
+  if ((await persist(next)) && session === formSession) $("#modal").close();
 }
 function renderEquipment() {
   const q = $("#search").value.toLowerCase();

@@ -1,3 +1,20 @@
+// Journal records contain plain objects, arrays and scalar values only.
+function cloneJournal(value) {
+  if (typeof structuredClone === "function") return structuredClone(value);
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(cloneJournal);
+  const result = {};
+  for (const key of Object.keys(value)) {
+    Object.defineProperty(result, key, {
+      value: cloneJournal(value[key]),
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  return result;
+}
+
 // Shared browser/server validation and merge rules.
 const parameterKeys = [
   "method",
@@ -210,7 +227,7 @@ function validateJournalBackup(obj) {
   for (const r of obj.recipes || [])
     if (!r.name?.trim()) throw Error("invalid");
   const result = normalizeJournal(
-    structuredClone({
+    cloneJournal({
       beans: obj.beans,
       brews: obj.brews,
       devices: obj.devices || [],

@@ -37,7 +37,8 @@ const sampleDefinitions = {
 };
 function sampleKey(bean) {
   if (!bean) return null;
-  if (Object.hasOwn(sampleDefinitions, bean.sampleKey)) return bean.sampleKey;
+  if (Object.prototype.hasOwnProperty.call(sampleDefinitions, bean.sampleKey))
+    return bean.sampleKey;
   return (
     Object.keys(sampleDefinitions).find((key) => {
       const base = sampleDefinitions[key].zh;

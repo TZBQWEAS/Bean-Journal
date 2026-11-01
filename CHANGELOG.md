@@ -1,5 +1,61 @@
 # 更新记录
 
+## v1.3.1 — 2026-11-01 · 第一个稳定版 / First stable release
+
+## 中文
+
+欢迎使用 **Bean Journal · 豆间 v1.3.1**！这是豆间的**第一个稳定版**，在 v1.3 的 SQLite 多端同步和设备管理基础上，集中完善兼容性、保存可靠性与备份处理。
+
+### 更新内容
+
+- 为缺少原生弹窗与对象克隆 API 的浏览器提供兼容处理，补全旧浏览器豆卡渲染和照片解码支持。
+- 修复载入示例豆卡时可能清空已有冲煮记录的问题。
+- 修复旧保存请求完成后误关闭新打开表单的问题。
+- 改善弹窗内保存失败提示的可见性，失败时保留输入内容。
+- 修复备份导出与导入大小边界不一致的问题，统一记录大小校验。
+- 为同步请求增加超时处理，覆盖响应头和响应内容读取；超时后释放保存队列，允许后续重试。
+- 超时时明确提示保存结果尚未确认，避免把不确定结果显示为保存成功。
+
+### 升级须知
+
+从 v1.3 升级时，先导出备份，再更新镜像并沿用原 `/data` 数据卷、Compose 项目名与卷名。不要执行 `docker compose down -v`。
+
+从 v1.2 升级，先在旧浏览器中导出 JSON，再导入新的共享实例；导入会替换该实例全部记录。无登录、无多人账号、无离线队列，能访问实例的人可以读写记录。
+
+本版照片仍随记录存储，整份记录上限为 64 MiB；照片独立存储尚未实现。
+
+Docker Hub 标签：`1.3.1`、`latest`；平台：`linux/amd64`。旧版 Safari 兼容性通过模拟缺失 API 的自动化测试覆盖，不代表所有旧系统均已完成真机验证。
+
+感谢你使用 **Bean Journal · 豆间**！
+
+---
+
+## English
+
+Welcome to **Bean Journal v1.3.1**! This is our **first stable release**, focused on compatibility, reliable saves and backup handling on top of v1.3's SQLite synchronization and equipment management.
+
+### What's new
+
+- Add fallbacks for browsers without native dialog and object-cloning APIs, plus compatibility fixes for bean rendering and photo decoding.
+- Preserve existing brew history when loading sample beans.
+- Prevent an earlier save from closing a newly opened form.
+- Keep save errors visible inside dialogs and retain entered values after failures.
+- Fix mismatched backup export/import size boundaries and enforce consistent journal size validation.
+- Add synchronization request timeouts covering both headers and response-body reads; release the save queue so later requests can proceed.
+- Explain that a timed-out save has an unconfirmed outcome instead of reporting success.
+
+### Upgrading
+
+From v1.3, export a backup first, then update the image while retaining the existing `/data` volume and Compose project/volume names. Do not run `docker compose down -v`.
+
+From v1.2, export JSON from the old browser and import it into the shared instance. Import replaces all records. There is no login, multiple accounts or offline queue; anyone who can reach the instance can read and modify records.
+
+Photos remain embedded in journal data, with a 64 MiB total journal limit. Separate photo storage is not included in this release.
+
+Docker Hub tags: `1.3.1`, `latest`; platform: `linux/amd64`. Compatibility tests simulate missing browser APIs; they do not constitute hardware verification of every older Safari version.
+
+Thank you for using **Bean Journal**!
+
 ## v1.3 — 2026-10-31
 
 欢迎使用 **Bean Journal · 豆间 v1.3**！本次更新带来 SQLite 自托管多端同步和更完整的设备管理。

@@ -79,12 +79,10 @@ async function start({ missingConfig = false, fail = false } = {}) {
       newer.revision++;
       Object.assign(newer.journal.devices[0], change);
       c.set(newer);
-      await c.w.document
-        .querySelector("#form")
-        .onsubmit({
-          preventDefault() {},
-          target: c.w.document.querySelector("#form"),
-        });
+      await c.w.document.querySelector("#form").onsubmit({
+        preventDefault() {},
+        target: c.w.document.querySelector("#form"),
+      });
       assert.equal(c.get().journal.brews.length, 0);
       assert.equal(c.w.document.querySelector("#modal").open, true);
       assert.equal(select.value, "machine");
@@ -158,6 +156,34 @@ async function start({ missingConfig = false, fail = false } = {}) {
     } finally {
       c.close();
     }
+  }
+  const timeoutClient = await start();
+  try {
+    const workingFetch = timeoutClient.w.fetch;
+    timeoutClient.run(
+      "const originalRequest=requestJournal; requestJournal=(options)=>originalRequest(options,10)",
+    );
+    timeoutClient.w.fetch = () => new Promise(() => {});
+    assert.equal(
+      await timeoutClient.run(
+        'persist({...data,beans:[...data.beans,{id:"timeout",name:"Pending"}]})',
+      ),
+      false,
+    );
+    assert.equal(timeoutClient.run("serverWrites"), 0);
+    timeoutClient.w.fetch = workingFetch;
+    assert.equal(
+      await timeoutClient.run(
+        'persist({...data,beans:[...data.beans,{id:"retry",name:"Retry"}]})',
+      ),
+      true,
+    );
+    assert.equal(
+      timeoutClient.get().journal.beans.some((b) => b.id === "retry"),
+      true,
+    );
+  } finally {
+    timeoutClient.close();
   }
   console.log(
     "PASS: missing mode configuration fails closed, remote equipment changes reject stale selections, database restore refreshes and protects drafts, delayed old responses ignored.",

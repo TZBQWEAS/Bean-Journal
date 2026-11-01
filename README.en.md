@@ -7,15 +7,15 @@
 </p>
 
 <p align="center">A little ritual, every day. Keep your beans, brews and favorite recipes in one place.</p>
-<p align="center"><strong>v1.3 · SQLite synchronization · English / 简体中文 · Light & dark themes</strong></p>
+<p align="center"><strong>v1.3.1 · SQLite synchronization · English / 简体中文 · Light & dark themes</strong></p>
 
 Bean Journal is a personal coffee notebook built with plain HTML, CSS and JavaScript. Collect bean cards, record each cup and keep reusable recipes. The current source supports an integrated Node.js / SQLite deployment as well as static hosting.
 
-## v1.3
+## v1.3.1 · First stable release
 
-Self-hosted SQLite synchronization, expanded equipment information and consistent date inputs. Read the [bilingual release notes](docs/releases/v1.3.md) and [changelog](CHANGELOG.md).
+The first stable release builds on v1.3 with compatibility fallbacks, safer saves, backup boundary fixes and request timeout handling. Read the [bilingual release notes](docs/releases/v1.3.md) and [changelog](CHANGELOG.md).
 
-**Upgrade from v1.2:** export a JSON backup from each old browser before upgrading. Import the chosen backup into v1.3; import replaces the shared journal. Other devices then access the same instance. Legacy browser data is retained, not automatically merged or continuously synchronized.
+**Upgrade from v1.2:** export a JSON backup from each old browser before upgrading. Import the chosen backup into v1.3.1; import replaces the shared journal. Other devices then access the same instance. Legacy browser data is retained, not automatically merged or continuously synchronized.
 
 ## Screenshots
 
@@ -67,11 +67,11 @@ Real phone screenshots provided by the project owner. Both images are 670 × 128
 
 ## Docker deployment
 
-Public image: [tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal). Tags `1.3` and `latest` point to v1.3 at release; `1.3` pins this version. Platform: `linux/amd64`.
+Public image: [tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal). Tags `1.3.1` and `latest` point to v1.3.1 at release; `1.3.1` pins this version. Platform: `linux/amd64`.
 
 ```sh
-docker pull tzbqweas/bean-journal:1.3
-docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3
+docker pull tzbqweas/bean-journal:1.3.1
+docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3.1
 ```
 
 Open `http://localhost:8080` locally or `http://SERVER_LAN_IP:8080` from other devices. All devices must reach the same instance. Allow the port on your host. There is **no login**: anyone who can reach it can read and modify the shared journal.
@@ -83,7 +83,7 @@ Use the repository's `compose.yaml`, or create one with:
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.3
+    image: tzbqweas/bean-journal:1.3.1
     ports:
       - "8080:8080"
     volumes:
@@ -111,8 +111,8 @@ Keep the same Compose project name and named volume on upgrades. Data and photos
 ### Build or archive the image
 
 ```sh
-docker build -t bean-journal:1.3 .
-docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3
+docker build -t bean-journal:1.3.1 .
+docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3.1
 docker load -i bean-journal-1.3.tar
 ```
 
@@ -170,5 +170,5 @@ Donations are entirely optional and do not affect access to any features.
 
 ## Version & credits
 
-Current version: **v1.3**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
+Current version: **v1.3.1**  See [CHANGELOG.md](CHANGELOG.md) for the release notes and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party resources and licenses.
 

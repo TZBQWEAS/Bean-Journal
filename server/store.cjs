@@ -70,6 +70,8 @@ function openStore(directory) {
     let journal;
     try {
       journal = validateJournalBackup(input);
+      if (Buffer.byteLength(JSON.stringify(journal), "utf8") > 64 * 1024 * 1024)
+        throw Error("invalid");
       const all = lists.flatMap((list) => journal[list]);
       if (
         all.length > 10000 ||

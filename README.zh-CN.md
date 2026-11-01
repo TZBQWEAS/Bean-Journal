@@ -7,15 +7,15 @@
 </p>
 
 <p align="center">把喜欢的风味，留在每一页。收藏豆卡，记录每次冲煮，保存心选配方。</p>
-<p align="center"><strong>v1.3 · SQLite 多端同步 · 中文 / English · 深浅主题</strong></p>
+<p align="center"><strong>v1.3.1 · SQLite 多端同步 · 中文 / English · 深浅主题</strong></p>
 
 豆间是一个属于咖啡爱好者的个人手记网站，采用原生 HTML、CSS 和 JavaScript。用豆卡收藏风味，用冲煮记录留住每一杯，用配方保存可反复使用的方案，当前源码可通过一体化 Node.js / SQLite 服务自托管，也保留纯静态部署方式。
 
-## v1.3 更新
+## v1.3.1 · 第一个稳定版
 
-新增 SQLite 自托管多端同步；设备品牌与型号分开，支持买入价格、自定义货币单位、买入日期和修改类型；日期格式统一，并补全多端冲突保护。详见 [中英文发布说明](docs/releases/v1.3.md) 和 [更新记录](CHANGELOG.md)。
+在 v1.3 的 SQLite 多端同步和设备管理基础上，完善浏览器兼容、保存保护、备份边界与请求超时处理，作为第一个稳定版发布。详见 [中英文发布说明](docs/releases/v1.3.md) 和 [更新记录](CHANGELOG.md)。
 
-**从 v1.2 升级：先在旧浏览器设置中导出 JSON 备份。** v1.3 启动后导入选定备份，导入会替换共享实例的全部记录；其他设备访问同一实例即可。旧浏览器数据会保留，不会自动合并或持续同步。
+**从 v1.2 升级：先在旧浏览器设置中导出 JSON 备份。** v1.3.1 启动后导入选定备份，导入会替换共享实例的全部记录；其他设备访问同一实例即可。旧浏览器数据会保留，不会自动合并或持续同步。
 
 ## 真实截图
 
@@ -67,11 +67,11 @@
 
 ## Docker 部署
 
-公开镜像：[tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal)。发布时 `1.3` 和 `latest` 均指向 v1.3；固定版本请使用 `1.3`。本次发布架构：`linux/amd64`。
+公开镜像：[tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal)。发布时 `1.3.1` 和 `latest` 均指向 v1.3.1；固定版本请使用 `1.3.1`。本次发布架构：`linux/amd64`。
 
 ```sh
-docker pull tzbqweas/bean-journal:1.3
-docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3
+docker pull tzbqweas/bean-journal:1.3.1
+docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3.1
 ```
 
 电脑打开 `http://localhost:8080`，手机或 iPad 打开 `http://服务器局域网IP:8080`。所有设备必须访问同一实例，主机需允许对应端口。**没有登录：能够访问实例的人都可以查看和修改全部记录。**
@@ -83,7 +83,7 @@ docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --rest
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.3
+    image: tzbqweas/bean-journal:1.3.1
     ports:
       - "8080:8080"
     volumes:
@@ -111,8 +111,8 @@ docker compose up -d
 ### 从源码构建或归档镜像
 
 ```sh
-docker build -t bean-journal:1.3 .
-docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3
+docker build -t bean-journal:1.3.1 .
+docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3.1
 docker load -i bean-journal-1.3.tar
 ```
 
@@ -170,4 +170,4 @@ compose.yaml   Docker Hub 镜像持久化部署
 
 ## 版本与致谢
 
-当前版本：**v1.3** 更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+当前版本：**v1.3.1** 更新说明见 [CHANGELOG.md](CHANGELOG.md)，第三方资源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

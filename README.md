@@ -70,8 +70,8 @@
 公开镜像：[tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal)。发布时 `1.3.1` 和 `latest` 均指向 v1.3.1；固定版本请使用 `1.3.1`。本次发布架构：`linux/amd64`。
 
 ```sh
-docker pull tzbqweas/bean-journal:1.3.1
-docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3.1
+docker pull tzbqweas/bean-journal:latest
+docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:latest
 ```
 
 电脑打开 `http://localhost:8080`，手机或 iPad 打开 `http://服务器局域网IP:8080`。所有设备必须访问同一实例，主机需允许对应端口。**没有登录：能够访问实例的人都可以查看和修改全部记录。**
@@ -83,7 +83,7 @@ docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --rest
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.3.1
+    image: tzbqweas/bean-journal:latest
     ports:
       - "8080:8080"
     volumes:
@@ -111,9 +111,9 @@ docker compose up -d
 ### 从源码构建或归档镜像
 
 ```sh
-docker build -t bean-journal:1.3.1 .
-docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3.1
-docker load -i bean-journal-1.3.tar
+docker build -t bean-journal:latest .
+docker save -o bean-journal-1.3.1.tar tzbqweas/bean-journal:latest
+docker load -i bean-journal-1.3.1.tar
 ```
 
 镜像包含网页、Node.js 与 SQLite，不包含开发依赖或个人数据。导入镜像后用上面的启动命令运行并挂载数据卷。其他受支持架构可在对应主机源码构建；本次发布镜像为 amd64。

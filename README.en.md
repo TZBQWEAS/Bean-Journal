@@ -70,8 +70,8 @@ Real phone screenshots provided by the project owner. Both images are 670 × 128
 Public image: [tzbqweas/bean-journal](https://hub.docker.com/r/tzbqweas/bean-journal). Tags `1.3.1` and `latest` point to v1.3.1 at release; `1.3.1` pins this version. Platform: `linux/amd64`.
 
 ```sh
-docker pull tzbqweas/bean-journal:1.3.1
-docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:1.3.1
+docker pull tzbqweas/bean-journal:latest
+docker run -d --name bean-journal -p 8080:8080 -v bean-journal-data:/data --restart unless-stopped tzbqweas/bean-journal:latest
 ```
 
 Open `http://localhost:8080` locally or `http://SERVER_LAN_IP:8080` from other devices. All devices must reach the same instance. Allow the port on your host. There is **no login**: anyone who can reach it can read and modify the shared journal.
@@ -83,7 +83,7 @@ Use the repository's `compose.yaml`, or create one with:
 ```yaml
 services:
   bean-journal:
-    image: tzbqweas/bean-journal:1.3.1
+    image: tzbqweas/bean-journal:latest
     ports:
       - "8080:8080"
     volumes:
@@ -111,9 +111,9 @@ Keep the same Compose project name and named volume on upgrades. Data and photos
 ### Build or archive the image
 
 ```sh
-docker build -t bean-journal:1.3.1 .
-docker save -o bean-journal-1.3.tar tzbqweas/bean-journal:1.3.1
-docker load -i bean-journal-1.3.tar
+docker build -t bean-journal:latest .
+docker save -o bean-journal-1.3.1.tar tzbqweas/bean-journal:latest
+docker load -i bean-journal-1.3.1.tar
 ```
 
 The image contains the app, Node.js and SQLite, without developer dependencies or private data. To run an imported image, use the command above with a persistent volume. Source builds are possible on other supported host architectures; this published image is amd64.
